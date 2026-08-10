@@ -14,7 +14,9 @@ const CAMPOS = [
 ];
 
 let modal = null;
-let empresaEditando = null;   // nombre de la empresa que se está editando
+let empresaEditando = null;   // empresa que se está editando (null si es nueva)
+let borrador = null;          // copia de trabajo: no se guarda hasta pulsar Guardar
+let creando = false;
 
 function api() {
     return (window.pywebview && window.pywebview.api) ? window.pywebview.api : null;
@@ -96,36 +98,70 @@ function pintar(seccion) {
 }
 
 // --- Sección Empresa ---
+// Se trabaja sobre una copia (borrador). Nada se guarda hasta pulsar Guardar,
+// así que Cancelar deja las cosas como estaban.
+function iniciarBorrador(nombre) {
+    const todas = empresas();
+    if (nombre && todas[nombre]) {
+        empresaEditando = nombre;
+        creando = false;
+        borrador = Object.assign({}, todas[nombre]);
+        if (!borrador.nombre) borrador.nombre = nombre;
+    } else {
+        empresaEditando = null;
+        creando = true;
+        borrador = {};
+    }
+}
+
+function hayCambiosSinGuardar() {
+    if (!borrador) return false;
+    if (creando) return Object.keys(borrador).some(k => (borrador[k] || '') !== '');
+    const guardada = empresas()[empresaEditando] || {};
+    const claves = new Set(Object.keys(borrador).concat(Object.keys(guardada)));
+    for (const k of claves) {
+        if ((borrador[k] || '') !== (guardada[k] || '')) return true;
+    }
+    return false;
+}
+
 function pintarEmpresa(cuerpo) {
     const todas = empresas();
     const nombres = Object.keys(todas).sort((a, b) => a.localeCompare(b, 'es'));
-    if (!empresaEditando || !todas[empresaEditando]) {
-        empresaEditando = (state.empresaActiva && todas[state.empresaActiva]) ? state.empresaActiva : (nombres[0] || null);
+
+    if (!borrador) {
+        const inicial = (state.empresaActiva && todas[state.empresaActiva]) ? state.empresaActiva : nombres[0];
+        if (inicial) iniciarBorrador(inicial);
     }
-    const emp = empresaEditando ? todas[empresaEditando] : null;
+    const hayFormulario = !!borrador;
 
     cuerpo.innerHTML =
         '<p class="ajustes-nota">Estos datos salen en las cotizaciones en PDF si activas ' +
-        '<strong>Incluir datos de empresa</strong> en Resultados. Ninguno es obligatorio.</p>' +
+        '<strong>Incluir datos de empresa</strong> en Resultados. Solo el nombre hace falta para poder guardarla.</p>' +
 
         '<div class="ajustes-fila-sel">' +
-        '  <select id="ajSelEmpresa">' +
-             (nombres.length ? nombres.map(n =>
-                '<option value="' + esc(n) + '"' + (n === empresaEditando ? ' selected' : '') + '>' + esc(n) + '</option>').join('')
-              : '<option value="">-- Sin empresas guardadas --</option>') +
+        '  <select id="ajSelEmpresa"' + (creando ? ' disabled' : '') + '>' +
+             (creando
+                ? '<option value="">(empresa nueva)</option>'
+                : (nombres.length
+                    ? nombres.map(n => '<option value="' + esc(n) + '"' +
+                        (n === empresaEditando ? ' selected' : '') + '>' + esc(n) + '</option>').join('')
+                    : '<option value="">-- Sin empresas guardadas --</option>')) +
         '  </select>' +
         '  <button class="btn btn-outline" id="ajNuevaEmpresa"><i class="bi bi-plus-lg"></i> Nueva</button>' +
-        (emp ? '  <button class="btn btn-danger" id="ajBorrarEmpresa">Eliminar</button>' : '') +
+        (!creando && empresaEditando ? '  <button class="btn btn-danger" id="ajBorrarEmpresa">Eliminar</button>' : '') +
         '</div>' +
 
-        (emp ? (
+        (!hayFormulario
+            ? '<p class="ajustes-nota">Pulsa <strong>Nueva</strong> para registrar tu empresa.</p>'
+            : (
         '<div class="ajustes-logo-fila">' +
         '  <div class="ajustes-logo-caja">' +
-             (emp.logo ? '<img src="' + emp.logo + '" alt="">' : '<span>Sin logo</span>') +
+             (borrador.logo ? '<img src="' + borrador.logo + '" alt="">' : '<span>Sin logo</span>') +
         '  </div>' +
         '  <div class="ajustes-logo-acciones">' +
         '    <button class="btn btn-outline" id="ajSubirLogo"><i class="bi bi-image"></i> Elegir logo</button>' +
-             (emp.logo ? '<button class="btn btn-outline" id="ajQuitarLogo">Quitar</button>' : '') +
+             (borrador.logo ? '<button class="btn btn-outline" id="ajQuitarLogo">Quitar</button>' : '') +
         '    <span class="ajustes-nota">PNG o JPG. Se reduce solo para que no pese.</span>' +
         '  </div>' +
         '  <input type="file" id="ajArchivoLogo" accept="image/png,image/jpeg" hidden>' +
@@ -134,69 +170,110 @@ function pintarEmpresa(cuerpo) {
         '<div class="input-grid ajustes-grid">' +
         CAMPOS.map(c =>
             '<div class="input-group">' +
-            '  <label for="aj_' + c.id + '">' + c.etiqueta + '</label>' +
+            '  <label for="aj_' + c.id + '">' + c.etiqueta + (c.id === 'nombre' ? ' *' : '') + '</label>' +
             '  <input type="text" id="aj_' + c.id + '" data-campo="' + c.id + '" placeholder="' + esc(c.ph) + '"' +
-            '         value="' + esc(emp[c.id] || '') + '">' +
+            '         value="' + esc(borrador[c.id] || '') + '">' +
             '</div>').join('') +
         '</div>' +
 
         '<div class="input-group" style="margin-top:0.75rem;">' +
         '  <label for="aj_nota">Nota al pie de la cotización</label>' +
         '  <textarea id="aj_nota" data-campo="nota" rows="2" class="ajustes-textarea"' +
-        '            placeholder="Ej: Precios válidos por 15 días. Se requiere 50% de anticipo.">' + esc(emp.nota || '') + '</textarea>' +
-        '</div>'
-        ) : '<p class="ajustes-nota">Crea una empresa para guardar su logo y sus datos.</p>');
+        '            placeholder="Ej: Precios válidos por 15 días. Se requiere 50% de anticipo.">' +
+             esc(borrador.nota || '') + '</textarea>' +
+        '</div>' +
 
-    // Cambiar de empresa
+        '<div class="ajustes-acciones">' +
+        '  <button class="btn btn-outline" id="ajCancelar">Cancelar</button>' +
+        '  <button class="btn btn-primary" id="ajGuardar">' +
+             (creando ? 'Crear empresa' : 'Guardar cambios') + '</button>' +
+        '</div>'));
+
+    // Los campos solo tocan el borrador
+    cuerpo.querySelectorAll('[data-campo]').forEach(inp => {
+        inp.addEventListener('input', () => { borrador[inp.getAttribute('data-campo')] = inp.value; });
+    });
+
     const sel = cuerpo.querySelector('#ajSelEmpresa');
-    if (sel) sel.addEventListener('change', () => {
-        empresaEditando = sel.value || null;
-        state.empresaActiva = empresaEditando;
-        guardar();
+    if (sel) sel.addEventListener('change', async () => {
+        const destino = sel.value;
+        if (hayCambiosSinGuardar()) {
+            const seguir = await confirmar('Hay cambios sin guardar en "' +
+                (borrador.nombre || empresaEditando || '') + '". Si cambias de empresa se pierden.',
+                { titulo: 'Cambios sin guardar', aceptar: 'Descartar y cambiar', peligro: true });
+            if (!seguir) { sel.value = empresaEditando || ''; return; }
+        }
+        iniciarBorrador(destino);
         pintarEmpresa(cuerpo);
-        actualizarEtiquetaEmpresa();
     });
 
     const nueva = cuerpo.querySelector('#ajNuevaEmpresa');
     if (nueva) nueva.addEventListener('click', async () => {
-        const nombre = (await pedirTexto('Nombre de la empresa', '', {
-            titulo: 'Nueva empresa',
-            icono: 'building',
-            ayuda: 'Con este nombre la identificas dentro de la app. Después le agregas el logo y el resto de datos.',
-            placeholder: 'Ej: PrintoVerse',
-            aceptar: 'Crear'
-        }) || '').trim();
-        if (!nombre) return;
-        empresas()[nombre] = { nombre: nombre };
-        empresaEditando = nombre;
-        state.empresaActiva = nombre;
-        guardar();
+        if (hayCambiosSinGuardar()) {
+            const seguir = await confirmar('Hay cambios sin guardar. Si creas otra empresa se pierden.',
+                { titulo: 'Cambios sin guardar', aceptar: 'Descartar', peligro: true });
+            if (!seguir) return;
+        }
+        iniciarBorrador(null);
         pintarEmpresa(cuerpo);
-        actualizarEtiquetaEmpresa();
+        const primero = cuerpo.querySelector('#aj_nombre');
+        if (primero) primero.focus();
     });
 
     const borrar = cuerpo.querySelector('#ajBorrarEmpresa');
     if (borrar) borrar.addEventListener('click', async () => {
-        if (!(await confirmar('Se eliminan sus datos y su logo.', {titulo: 'Eliminar ' + empresaEditando, aceptar: 'Eliminar', peligro: true}))) return;
+        if (!(await confirmar('Se eliminan sus datos y su logo.',
+                { titulo: 'Eliminar ' + empresaEditando, aceptar: 'Eliminar', peligro: true }))) return;
         delete empresas()[empresaEditando];
         if (state.empresaActiva === empresaEditando) state.empresaActiva = null;
-        empresaEditando = null;
+        borrador = null; empresaEditando = null; creando = false;
         guardar();
         pintarEmpresa(cuerpo);
         actualizarEtiquetaEmpresa();
     });
 
-    // Campos de texto: se guardan al salir del campo
-    cuerpo.querySelectorAll('[data-campo]').forEach(inp => {
-        inp.addEventListener('change', () => {
-            if (!empresaEditando) return;
-            empresas()[empresaEditando][inp.getAttribute('data-campo')] = inp.value.trim();
-            guardar();
-            actualizarEtiquetaEmpresa();
-        });
+    const cancelar = cuerpo.querySelector('#ajCancelar');
+    if (cancelar) cancelar.addEventListener('click', () => {
+        const todasAhora = empresas();
+        if (creando) {
+            const volver = (state.empresaActiva && todasAhora[state.empresaActiva])
+                ? state.empresaActiva : Object.keys(todasAhora)[0];
+            if (volver) iniciarBorrador(volver);
+            else { borrador = null; creando = false; empresaEditando = null; }
+        } else {
+            iniciarBorrador(empresaEditando);
+        }
+        pintarEmpresa(cuerpo);
     });
 
-    // Logo
+    const guardarBtn = cuerpo.querySelector('#ajGuardar');
+    if (guardarBtn) guardarBtn.addEventListener('click', async () => {
+        const nombre = (borrador.nombre || '').trim();
+        if (!nombre) {
+            await avisar('Ponle un nombre a la empresa para poder guardarla. El resto de datos son opcionales.',
+                         'Falta el nombre');
+            const campo = cuerpo.querySelector('#aj_nombre');
+            if (campo) campo.focus();
+            return;
+        }
+        const todasAhora = empresas();
+        if (todasAhora[nombre] && nombre !== empresaEditando) {
+            const reemplazar = await confirmar('Ya hay una empresa llamada "' + nombre + '". Si continúas se reemplaza.',
+                { titulo: 'Nombre repetido', aceptar: 'Reemplazar', peligro: true });
+            if (!reemplazar) return;
+        }
+        const datos = Object.assign({}, borrador, { nombre: nombre });
+        if (!creando && empresaEditando && empresaEditando !== nombre) delete todasAhora[empresaEditando];
+        todasAhora[nombre] = datos;
+        state.empresaActiva = nombre;
+        guardar();
+        iniciarBorrador(nombre);
+        pintarEmpresa(cuerpo);
+        actualizarEtiquetaEmpresa();
+        if (window.showSaveToast) window.showSaveToast('<i class="bi bi-check-circle"></i> Empresa guardada');
+    });
+
+    // El logo también se queda en el borrador hasta guardar
     const btnLogo = cuerpo.querySelector('#ajSubirLogo');
     const archivo = cuerpo.querySelector('#ajArchivoLogo');
     if (btnLogo && archivo) {
@@ -206,40 +283,16 @@ function pintarEmpresa(cuerpo) {
             if (!f) return;
             reducirImagen(f, (dataUrl) => {
                 if (!dataUrl) { avisar('No se pudo leer la imagen.'); return; }
-                empresas()[empresaEditando].logo = dataUrl;
-                guardar();
+                borrador.logo = dataUrl;
                 pintarEmpresa(cuerpo);
             });
         });
     }
     const quitar = cuerpo.querySelector('#ajQuitarLogo');
     if (quitar) quitar.addEventListener('click', () => {
-        delete empresas()[empresaEditando].logo;
-        guardar();
+        delete borrador.logo;
         pintarEmpresa(cuerpo);
     });
-}
-
-// Reduce el logo a 400 px de ancho como máximo para que el archivo de datos
-// no se llene de una imagen enorme.
-function reducirImagen(archivo, listo) {
-    const lector = new FileReader();
-    lector.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-            const maxAncho = 400;
-            const escala = Math.min(1, maxAncho / img.width);
-            const lienzo = document.createElement('canvas');
-            lienzo.width = Math.round(img.width * escala);
-            lienzo.height = Math.round(img.height * escala);
-            lienzo.getContext('2d').drawImage(img, 0, 0, lienzo.width, lienzo.height);
-            try { listo(lienzo.toDataURL('image/png')); } catch (e) { listo(null); }
-        };
-        img.onerror = () => listo(null);
-        img.src = lector.result;
-    };
-    lector.onerror = () => listo(null);
-    lector.readAsDataURL(archivo);
 }
 
 // --- Tema claro / oscuro ---

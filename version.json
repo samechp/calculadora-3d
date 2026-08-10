@@ -1,6 +1,6 @@
 {
   "app_version": "1.0.3",
-  "web_version": "1.0.6",
+  "web_version": "1.0.7",
   "web_files": [
     "index.html",
     "style.css",
@@ -17,5 +17,5 @@
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Cuadros propios en vez de los del navegador, tabla editable de filamentos y arreglo del boton de limpiar"
+  "notas": "Crear empresa en un solo formulario con botones Guardar y Cancelar"
 }

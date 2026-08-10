@@ -1365,3 +1365,14 @@ body.con-aviso-update { padding-top: 3.75rem; }
 }
 .tabla-borrar:hover { color: var(--danger); background: var(--realce); }
 /* ===== FIN TABLA DE FILAMENTOS ===== */
+
+/* Botones de guardar/cancelar del formulario de empresa */
+.ajustes-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1.1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+}
+.ajustes-acciones .btn { flex: 0 0 auto; min-width: 8rem; }
