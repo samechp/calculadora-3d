@@ -245,18 +245,31 @@ def _lanzar_reemplazo():
         '@echo off\r\n'
         'set "ACTUAL={actual}"\r\n'
         'set "NUEVO={nuevo}"\r\n'
+        'set "CARPETA={carpeta}"\r\n'
         ':esperar\r\n'
         'timeout /t 1 /nobreak >nul\r\n'
         '2>nul (>>"%ACTUAL%" call ) || goto esperar\r\n'
         'move /y "%NUEVO%" "%ACTUAL%" >nul\r\n'
+        'timeout /t 1 /nobreak >nul\r\n'
+        'cd /d "%CARPETA%"\r\n'
         'start "" "%ACTUAL%"\r\n'
         'del "%~f0"\r\n'
-    ).format(actual=actual, nuevo=nuevo)
+    ).format(actual=actual, nuevo=nuevo, carpeta=base)
     with open(bat, 'w', encoding='utf-8') as f:
         f.write(contenido)
 
+    # PyInstaller le pasa a los procesos hijos variables como _MEIPASS2 y _PYI_*
+    # que apuntan a la carpeta temporal de ESTA instancia. Si no se limpian, la
+    # app relanzada intenta usar una carpeta que ya no existe y muere con "Error".
+    entorno = {k: v for k, v in os.environ.items()
+               if not (k.startswith('_MEI') or k.startswith('_PYI'))}
+
+    # Solo CREATE_NO_WINDOW: con DETACHED_PROCESS el .bat se queda sin consola
+    # y el comando "start" no llega a abrir la app de nuevo.
     subprocess.Popen(['cmd', '/c', bat],
-                     creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) | getattr(subprocess, 'DETACHED_PROCESS', 0))
+                     cwd=base,
+                     env=entorno,
+                     creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     return True
 
 

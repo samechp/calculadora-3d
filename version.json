@@ -10,5 +10,5 @@
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Primera version publica: buscador de piezas con filtro, ayuda contextual en cada campo y la ventana recuerda su tamano"
+  "notas": "Primera version publica: buscador de piezas con filtro, ayuda contextual en cada campo, la ventana recuerda su tamano y actualizacion automatica"
 }
