@@ -212,8 +212,75 @@ function formatMoney(value, isUSD) {
 function applyRedondeo(value, mode) {
     if (mode === 'none') return value;
     const factor = parseInt(mode);
+    // El valor siempre viaja en pesos, pero si los resultados se están viendo en
+    // dólares hay que redondear sobre el número que el usuario ve; si no, el
+    // precio queda "redondo" en COP y con decimales sueltos en USD.
+    if (state.resultadosEnUSD && state.precioDolar > 0) {
+        const paso = factor / 1000;            // 500 -> 0,5   1.000 -> 1   5.000 -> 5
+        const enUSD = value / state.precioDolar;
+        return Math.ceil(enUSD / paso) * paso * state.precioDolar;
+    }
     return Math.ceil(value / factor) * factor;
 }
+
+// Las opciones del desplegable de redondeo cambian según la moneda mostrada
+function actualizarOpcionesRedondeo() {
+    const usd = !!state.resultadosEnUSD;
+    const textos = usd
+        ? { none: 'Sin redondeo', '500': 'Múltiplos de 0,50', '1000': 'Múltiplos de 1', '5000': 'Múltiplos de 5' }
+        : { none: 'Sin redondeo', '500': 'Múltiplos de 500', '1000': 'Múltiplos de 1.000', '5000': 'Múltiplos de 5.000' };
+    ['redondeoMode', 'redondeoModeProyecto'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        Array.from(sel.options).forEach(o => { if (textos[o.value]) o.textContent = textos[o.value]; });
+        const etiqueta = document.querySelector('label[for="' + id + '"]');
+        if (etiqueta) {
+            const icono = etiqueta.querySelector('.help-i');
+            etiqueta.textContent = 'Redondear Final a (en ' + (usd ? 'USD' : 'COP') + '):';
+            if (icono) etiqueta.appendChild(icono);
+        }
+    });
+}
+
+// ===== AVISO DE DATOS QUE FALTAN =====
+// Solo avisa. Nunca impide calcular ni exportar: un campo vacío vale 0 y el
+// precio saldría más barato sin que nadie lo note, que es lo que se evita.
+function revisarDatosFaltantes() {
+    const vacio = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        const n = parseFloat(el.value);
+        return isNaN(n) || n <= 0;
+    };
+
+    const faltan = [];
+    if (vacio('gramosFilamento')) faltan.push('gramos de filamento');
+    if (!els.mainFilamentoSelect || !els.mainFilamentoSelect.value) faltan.push('filamento del material principal');
+    if (vacio('horasImpresion') && vacio('minutosImpresion')) faltan.push('tiempo de impresión');
+    if (vacio('precioKwh')) faltan.push('precio del kWh');
+    if (vacio('consumoWatts')) faltan.push('consumo en watts');
+    if (vacio('manoObraHora')) faltan.push('mano de obra por hora');
+    if (vacio('desgasteMaquina') || vacio('precioRepuestos')) faltan.push('desgaste de máquina');
+
+    let aviso = document.getElementById('avisoDatosFaltantes');
+    if (!faltan.length) {
+        if (aviso) aviso.style.display = 'none';
+        return;
+    }
+    if (!aviso) {
+        const lista = document.querySelector('.results-card .results-list');
+        if (!lista) return;
+        aviso = document.createElement('div');
+        aviso.id = 'avisoDatosFaltantes';
+        aviso.className = 'aviso-faltantes';
+        lista.parentNode.insertBefore(aviso, lista);
+    }
+    aviso.style.display = '';
+    aviso.innerHTML = '<i class="bi bi-exclamation-triangle"></i>' +
+        '<div><strong>Faltan datos y el precio sale más bajo de lo real.</strong>' +
+        '<span>Sin llenar: ' + faltan.join(', ') + '.</span></div>';
+}
+// ===== FIN AVISO DE DATOS QUE FALTAN =====
 
 function formatTime(totalHours) {
     const totalH = Math.floor(totalHours);
@@ -551,7 +618,9 @@ function calculate() {
     }
 
     checkDolarVisibility();
-    
+    actualizarOpcionesRedondeo();
+    revisarDatosFaltantes();
+
     let vDolar = parseFloat(els.precioDolar.value);
     if(isNaN(vDolar) || vDolar <= 0) vDolar = 3600;
     state.precioDolar = vDolar;
@@ -1394,7 +1463,11 @@ async function saveAllData() {
             pieces: state.pieces,
             projects: state.projects,
             megaProjects: state.megaProjects,
-            filamentos: state.filamentosGuardados || []
+            filamentos: state.filamentosGuardados || [],
+            empresas: state.empresas || {},
+            empresaActiva: state.empresaActiva || null,
+            incluirEmpresa: !!state.incluirEmpresa,
+            tema: state.tema || null
         });
         if (window.pywebview) {
             await window.pywebview.api.save_profiles(payload);
@@ -1429,6 +1502,11 @@ async function loadProfiles() {
             if (parsed.filamentos && parsed.filamentos.length > 0) {
                 state.filamentosGuardados = parsed.filamentos;
             }
+            state.empresas = parsed.empresas || {};
+            state.empresaActiva = parsed.empresaActiva || null;
+            state.incluirEmpresa = !!parsed.incluirEmpresa;
+            state.tema = parsed.tema || null;
+            if (window.aplicarTemaGuardado) window.aplicarTemaGuardado();
             if (window.renderFilamentosGuardados) window.renderFilamentosGuardados();
             updateProfileSelect();
             updatePieceSelect();
@@ -1445,13 +1523,19 @@ async function savePieces() { await saveAllData(); updatePieceSelect(); }
 async function saveProjects() { await saveAllData(); updateProjectSelect(); }
 async function saveMegaProjects() { await saveAllData(); updateMegaProjectSelect(); }
 
+// Datos de la empresa para las cotizaciones, o cadena vacía si no se quieren
+function empresaJSON() {
+    const emp = window.empresaParaCotizacion ? window.empresaParaCotizacion() : null;
+    return emp ? JSON.stringify(emp) : '';
+}
+
 els.btnExportPdf.addEventListener('click', async () => {
     const total = formatMoney(lastCalcResults['Total a Cobrar'], false);
     const gFil = lastCalcResults['_gramos_input'];
     const tiempo_prod = lastCalcResults['Tiempo Est. Producción'] || '';
     const nombre = state.currentPiece || '';
     if(window.pywebview) {
-        await window.pywebview.api.export_pdf(total, gFil, tiempo_prod, nombre);
+        await window.pywebview.api.export_pdf(total, gFil, tiempo_prod, nombre, empresaJSON());
     } else if (window.exportPdfPieza) {
         window.exportPdfPieza(total, gFil, tiempo_prod, nombre);
     }
@@ -1493,7 +1577,7 @@ els.btnExportProjectPdf.addEventListener('click', async () => {
         if (window.exportPdfProyecto) {
             window.exportPdfProyecto(total, p.gramosTotales, p.camas, p.unidades, p.unidadesCama, precio_cama, matPdf, insPdf, moPdf, tiempo_proy, costo_unidad_pdf, nombre, costo_prod_pieza_pdf, costo_prod_total_pdf);
         } else if (window.pywebview) {
-            await window.pywebview.api.export_project_pdf(total, p.gramosTotales, p.camas, p.unidades, p.unidadesCama, precio_cama, matPdf, insPdf, moPdf, tiempo_proy, costo_unidad_pdf, nombre, costo_prod_pieza_pdf, costo_prod_total_pdf);
+            await window.pywebview.api.export_project_pdf(total, p.gramosTotales, p.camas, p.unidades, p.unidadesCama, precio_cama, matPdf, insPdf, moPdf, tiempo_proy, costo_unidad_pdf, nombre, costo_prod_pieza_pdf, costo_prod_total_pdf, empresaJSON());
         }
     }
 });
@@ -1556,7 +1640,7 @@ els.btnExportMegaPdf.addEventListener('click', async () => {
         };
         
         if (window.pywebview) {
-            await window.pywebview.api.export_megaproject_pdf(JSON.stringify(payloadObj));
+            await window.pywebview.api.export_megaproject_pdf(JSON.stringify(payloadObj), empresaJSON());
         } else if (window.exportPdfMegaProyecto) {
             window.exportPdfMegaProyecto(payloadObj);
         }
@@ -2267,3 +2351,172 @@ function autoSaveCurrentState() {
 })();
 // ===== FIN COMBOBOX DE PIEZAS =====
 
+
+// ===== RENOMBRAR PIEZAS / PROYECTOS / MEGA PROYECTOS =====
+(function() {
+    const modal  = document.getElementById('renameModal');
+    const titulo = document.getElementById('renameTitle');
+    const pista  = document.getElementById('renameHint');
+    const input  = document.getElementById('renameInput');
+    const btnOk  = document.getElementById('btnConfirmRename');
+    const btnNo  = document.getElementById('btnCancelRename');
+    if (!modal) return;
+
+    const TIPOS = {
+        pieza: {
+            etiqueta: 'pieza',
+            actual:  () => state.currentPiece,
+            mapa:    () => state.pieces,
+            marcar:  (v) => { state.currentPiece = v; },
+            guardar: savePieces
+        },
+        proyecto: {
+            etiqueta: 'proyecto',
+            actual:  () => state.currentProject,
+            mapa:    () => state.projects,
+            marcar:  (v) => { state.currentProject = v; },
+            guardar: saveProjects
+        },
+        mega: {
+            etiqueta: 'mega proyecto',
+            actual:  () => state.currentMegaProject,
+            mapa:    () => state.megaProjects,
+            marcar:  (v) => { state.currentMegaProject = v; },
+            guardar: saveMegaProjects
+        }
+    };
+
+    let tipoActivo = null;
+
+    function abrir(tipo) {
+        const cfg = TIPOS[tipo];
+        const viejo = cfg.actual();
+        if (!viejo) {
+            alert('Primero carga un ' + cfg.etiqueta + ' para poder renombrarlo.');
+            return;
+        }
+        tipoActivo = tipo;
+        titulo.textContent = 'Renombrar ' + cfg.etiqueta;
+        pista.textContent = 'Se llama "' + viejo + '". Se conserva todo lo guardado, solo cambia el nombre.';
+        input.value = viejo;
+        modal.classList.add('active');
+        input.focus();
+        input.select();
+    }
+
+    function cerrar() {
+        modal.classList.remove('active');
+        tipoActivo = null;
+    }
+
+    // Un proyecto puede estar dentro de mega proyectos: hay que actualizar
+    // esas referencias o quedarían apuntando a un nombre que ya no existe.
+    function actualizarReferencias(viejo, nuevo) {
+        (state.megaProjectItems || []).forEach(item => {
+            if (item._nombre === viejo) item._nombre = nuevo;
+        });
+        for (const nombreMega in state.megaProjects) {
+            const items = (state.megaProjects[nombreMega] || {}).items || [];
+            items.forEach(item => {
+                if (item._nombre === viejo) item._nombre = nuevo;
+            });
+        }
+        if (window.renderMegaProjectList) window.renderMegaProjectList();
+    }
+
+    function confirmar() {
+        if (!tipoActivo) return;
+        const cfg = TIPOS[tipoActivo];
+        const viejo = cfg.actual();
+        const nuevo = input.value.trim();
+        if (!nuevo || nuevo === viejo) { cerrar(); return; }
+
+        const mapa = cfg.mapa();
+        if (mapa[nuevo] && !confirm('Ya existe un ' + cfg.etiqueta + ' llamado "' + nuevo + '". ¿Reemplazarlo?')) return;
+
+        mapa[nuevo] = mapa[viejo];
+        delete mapa[viejo];
+        cfg.marcar(nuevo);
+        if (tipoActivo === 'proyecto') actualizarReferencias(viejo, nuevo);
+        cfg.guardar();
+        if (tipoActivo === 'pieza' && window.updatePieceActiveSummary) window.updatePieceActiveSummary();
+        cerrar();
+    }
+
+    btnOk.addEventListener('click', confirmar);
+    btnNo.addEventListener('click', cerrar);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); confirmar(); }
+        if (e.key === 'Escape') { e.preventDefault(); cerrar(); }
+    });
+    modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
+
+    const enlaces = {
+        btnRenamePiece: 'pieza',
+        btnRenameProject: 'proyecto',
+        btnRenameMegaProject: 'mega'
+    };
+    Object.keys(enlaces).forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.addEventListener('click', () => abrir(enlaces[id]));
+    });
+})();
+// ===== FIN RENOMBRAR =====
+
+// ===== ALTURA ESTABLE DE LA TARJETA DE PIEZA =====
+// Cada pestaña tiene distinto contenido, así que la tarjeta cambiaba de tamaño
+// al moverse entre ellas. Se mide la más alta y se usa como mínimo para todas;
+// solo se vuelve a calcular si cambia el tamaño de la ventana.
+(function() {
+    const paneles = Array.from(document.querySelectorAll('.piece-tab-content'));
+    if (!paneles.length) return;
+
+    function medir() {
+        const contenedor = paneles[0].parentElement;
+        const est = getComputedStyle(contenedor);
+        // Ancho real disponible: si se mide en posición absoluta sin fijarlo,
+        // el panel se estira a la ventana y devuelve una altura falsa.
+        const anchoUtil = contenedor.clientWidth
+            - parseFloat(est.paddingLeft || 0) - parseFloat(est.paddingRight || 0);
+        if (anchoUtil <= 0) return;
+
+        let alto = 0;
+        paneles.forEach(p => {
+            p.style.minHeight = '';
+            const oculto = !p.classList.contains('active');
+            if (oculto) {
+                p.style.display = 'block';
+                p.style.position = 'absolute';
+                p.style.visibility = 'hidden';
+                p.style.left = '-10000px';
+                p.style.top = '0';
+                p.style.width = anchoUtil + 'px';
+            }
+            alto = Math.max(alto, p.offsetHeight);
+            if (oculto) {
+                p.style.display = '';
+                p.style.position = '';
+                p.style.visibility = '';
+                p.style.left = '';
+                p.style.top = '';
+                p.style.width = '';
+            }
+        });
+        if (alto > 0) paneles.forEach(p => { p.style.minHeight = alto + 'px'; });
+    }
+
+    let temporizador = null;
+    function medirConCalma() {
+        clearTimeout(temporizador);
+        temporizador = setTimeout(medir, 150);
+    }
+
+    window.addEventListener('load', medirConCalma);
+    window.addEventListener('resize', medirConCalma);
+    // Abrir o cerrar la configuración de impresión cambia el alto real
+    document.addEventListener('click', (e) => {
+        if (e.target.closest && e.target.closest('.print-config-toggle, .print-subsection-header')) medirConCalma();
+    });
+    window.recalcularAltoPieza = medirConCalma;
+})();
+// ===== FIN ALTURA ESTABLE =====

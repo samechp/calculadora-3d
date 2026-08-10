@@ -20,6 +20,65 @@ def get_base_path():
 
 PROFILES_FILE = os.path.join(get_base_path(), 'perfiles.json')
 
+# fpdf 1.7 solo sabe escribir latin-1. Si el usuario escribe el nombre de su
+# empresa con comillas tipográficas, un guion largo o un emoji, la exportación
+# entera reventaría. Se cambian los casos comunes y se descarta el resto.
+_CAMBIOS_PDF = {
+    '‘': "'", '’': "'", '“': '"', '”': '"',
+    '–': '-', '—': '-', '…': '...', ' ': ' ',
+    '•': '-', '€': 'EUR',
+}
+
+
+def _texto_pdf(texto):
+    if texto is None:
+        return ''
+    texto = str(texto)
+    for malo, bueno in _CAMBIOS_PDF.items():
+        texto = texto.replace(malo, bueno)
+    return texto.encode('latin-1', 'ignore').decode('latin-1')
+
+
+# ===== COPIAS DE SEGURIDAD =====
+# Todo (perfiles, piezas, proyectos, filamentos) vive en un solo archivo que se
+# sobrescribe en cada guardado. Antes de pisarlo se guarda una copia, y se
+# conservan las últimas COPIAS_MAX por si hay que volver atrás.
+COPIAS_DIR = os.path.join(get_base_path(), 'copias')
+COPIAS_MAX = 10
+
+
+def _copias_ordenadas():
+    if not os.path.isdir(COPIAS_DIR):
+        return []
+    archivos = [f for f in os.listdir(COPIAS_DIR) if f.startswith('perfiles_') and f.endswith('.json')]
+    archivos.sort(reverse=True)   # el nombre lleva la fecha, así que ordena solo
+    return archivos
+
+
+def hacer_copia():
+    """Guarda el estado anterior antes de sobrescribirlo. Si algo falla, no se
+    interrumpe el guardado: perder una copia es mucho menos grave que no guardar."""
+    try:
+        if not os.path.exists(PROFILES_FILE) or os.path.getsize(PROFILES_FILE) < 10:
+            return
+        if not os.path.isdir(COPIAS_DIR):
+            os.makedirs(COPIAS_DIR)
+
+        nombre = 'perfiles_{}.json'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+        destino = os.path.join(COPIAS_DIR, nombre)
+        if os.path.exists(destino):
+            return   # ya hay una copia de este mismo segundo
+        shutil.copy2(PROFILES_FILE, destino)
+
+        for viejo in _copias_ordenadas()[COPIAS_MAX:]:
+            try:
+                os.remove(os.path.join(COPIAS_DIR, viejo))
+            except Exception:
+                pass
+    except Exception as e:
+        print("No se pudo hacer la copia de seguridad:", e)
+# ===== FIN COPIAS DE SEGURIDAD =====
+
 # ===== TAMAÑO Y POSICIÓN DE LA VENTANA (se recuerdan entre sesiones) =====
 WINDOW_FILE = os.path.join(get_base_path(), 'ventana.json')
 
@@ -100,8 +159,8 @@ def save_window_state(st):
 #     plano y queda lista para el siguiente arranque.
 #   - El EJECUTABLE (esta parte en Python): son ~34 MB. Solo se avisa; el usuario
 #     decide con un botón y la app se reinicia sola.
-APP_VERSION = '1.0.2'   # versión del .exe
-WEB_VERSION = '1.0.3'   # versión de la interfaz que viene dentro del .exe
+APP_VERSION = '1.0.3'   # versión del .exe
+WEB_VERSION = '1.0.4'   # versión de la interfaz que viene dentro del .exe
 
 REPO = 'samechp/calculadora-3d'
 VERSION_URL = 'https://raw.githubusercontent.com/{}/main/version.json'.format(REPO)
@@ -494,11 +553,48 @@ class Api:
                 log.write(f"[{datetime.datetime.now()}] filamentos={n_fil}, piezas={n_piezas}\n")
                 for f in parsed.get('filamentos', []):
                     log.write(f"  -> {f.get('marca')} {f.get('tipo')} {f.get('color')}\n")
+            hacer_copia()
             with open(PROFILES_FILE, 'w', encoding='utf-8') as f:
                 f.write(data)
             return True
         except Exception as e:
             print("Error guardando perfiles:", e)
+            return False
+
+    # ---- Copias de seguridad (lo llama la ventana de Ajustes) ----
+    def listar_copias(self):
+        salida = []
+        try:
+            for archivo in _copias_ordenadas():
+                ruta = os.path.join(COPIAS_DIR, archivo)
+                marca = archivo.replace('perfiles_', '').replace('.json', '')
+                fecha, hora = (marca.split('_') + [''])[:2]
+                kb = os.path.getsize(ruta) / 1024.0
+                salida.append({
+                    'archivo': archivo,
+                    'fecha': '{} a las {}'.format(fecha, hora.replace('-', ':')),
+                    'tamano': '{:.0f} KB'.format(kb) if kb >= 1 else '<1 KB',
+                })
+        except Exception as e:
+            print("Error listando copias:", e)
+        return json.dumps(salida)
+
+    def restaurar_copia(self, archivo):
+        try:
+            # Solo un nombre de archivo, nunca una ruta: evita salirse de la carpeta
+            archivo = os.path.basename(str(archivo))
+            origen = os.path.join(COPIAS_DIR, archivo)
+            if not os.path.exists(origen):
+                return False
+            with open(origen, 'r', encoding='utf-8') as f:
+                contenido = f.read()
+            json.loads(contenido)          # si la copia está corrupta, no se restaura
+            hacer_copia()                  # lo de ahora también se guarda por si acaso
+            with open(PROFILES_FILE, 'w', encoding='utf-8') as f:
+                f.write(contenido)
+            return True
+        except Exception as e:
+            print("Error restaurando la copia:", e)
             return False
 
     def export_profiles_file(self, data):
@@ -530,7 +626,76 @@ class Api:
             print("Error importando perfiles:", e)
             return "{}"
 
-    def export_pdf(self, total, filament, tiempo_prod, nombre=''):
+    def _dibujar_empresa(self, pdf, empresa_json):
+        """Membrete con los datos de la empresa. Devuelve la nota al pie (si hay)
+        para imprimirla al final. Todos los campos son opcionales."""
+        if not empresa_json:
+            return ''
+        try:
+            emp = json.loads(empresa_json) if isinstance(empresa_json, str) else empresa_json
+        except Exception:
+            return ''
+        if not isinstance(emp, dict) or not emp:
+            return ''
+
+        logo_temp = None
+        try:
+            logo = emp.get('logo') or ''
+            if logo.startswith('data:image'):
+                import base64
+                cabecera, datos64 = logo.split(',', 1)
+                ext = '.png' if 'png' in cabecera else '.jpg'
+                fd, logo_temp = tempfile.mkstemp(suffix=ext, prefix='calc3d_logo_')
+                with os.fdopen(fd, 'wb') as f:
+                    f.write(base64.b64decode(datos64))
+                pdf.image(logo_temp, x=10, y=8, h=18)
+        except Exception as e:
+            print("No se pudo poner el logo en el PDF:", e)
+
+        try:
+            pdf.set_xy(35, 10)
+            pdf.set_font("Arial", 'B', 13)
+            pdf.cell(0, 6, txt=_texto_pdf(emp.get('nombre', '')), ln=1)
+            pdf.set_font("Arial", size=9)
+            renglones = []
+            if emp.get('nit'):
+                renglones.append('NIT: ' + emp['nit'])
+            contacto = ' | '.join(x for x in [emp.get('telefono'), emp.get('email'), emp.get('web')] if x)
+            if contacto:
+                renglones.append(contacto)
+            if emp.get('direccion'):
+                renglones.append(emp['direccion'])
+            for r in renglones:
+                pdf.set_x(35)
+                pdf.cell(0, 4.5, txt=_texto_pdf(r), ln=1)
+
+            y = max(pdf.get_y(), 28)
+            pdf.line(10, y + 1, 200, y + 1)
+            pdf.set_y(y + 5)
+        except Exception as e:
+            print("No se pudo poner el membrete:", e)
+        finally:
+            if logo_temp:
+                try:
+                    os.remove(logo_temp)
+                except Exception:
+                    pass
+
+        return emp.get('nota', '') or ''
+
+    def _nota_pie(self, pdf, nota):
+        if not nota:
+            return
+        try:
+            pdf.ln(8)
+            pdf.set_font("Arial", 'I', 9)
+            pdf.set_text_color(110, 110, 110)
+            pdf.multi_cell(0, 4.5, txt=_texto_pdf(nota))
+            pdf.set_text_color(0, 0, 0)
+        except Exception as e:
+            print("No se pudo poner la nota al pie:", e)
+
+    def export_pdf(self, total, filament, tiempo_prod, nombre='', empresa_json=''):
         try:
             file_types = ('Archivos PDF (*.pdf)',)
             fname = f'Cotizacion ({nombre}).pdf' if nombre else 'Cotizacion_Impresion.pdf'
@@ -544,12 +709,15 @@ class Api:
                 
             pdf = FPDF()
             pdf.add_page()
+            nota_pie = self._dibujar_empresa(pdf, empresa_json)
             pdf.set_font("Arial", 'B', 16)
-            pdf.cell(200, 10, txt="Cotización Impresión", ln=1, align='C')
+            pdf.cell(200, 10, txt=_texto_pdf("Cotización Impresión"), ln=1, align='C')
             pdf.ln(10)
             pdf.set_font("Arial", size=12)
             date_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
             pdf.cell(200, 10, txt=f"Fecha: {date_str}", ln=1, align='L')
+            if nombre:
+                pdf.cell(200, 10, txt=_texto_pdf(f"Pieza: {nombre}"), ln=1, align='L')
             pdf.ln(5)
             pdf.set_font("Arial", 'B', 12)
             pdf.cell(100, 10, txt="Gramos de Filamento Estimados: ", ln=0)
@@ -568,7 +736,9 @@ class Api:
             pdf.set_font("Arial", size=14)
             pdf.set_text_color(20, 160, 40)
             pdf.cell(100, 10, txt=f"{total}", ln=1)
-            
+            pdf.set_text_color(0, 0, 0)
+
+            self._nota_pie(pdf, nota_pie)
             pdf.output(path)
             return True
         except Exception as e:
@@ -617,7 +787,7 @@ class Api:
             print("Error exportando BOM:", e)
             return False
 
-    def export_project_pdf(self, total_proyecto, gramos_totales, camas, unids_pedido, unids_cama, precio_por_cama, costo_materiales, insumos_extra, mano_obra, tiempo_proy, costo_unidad_pdf, nombre='', costo_prod_pieza=None, costo_prod_total=None):
+    def export_project_pdf(self, total_proyecto, gramos_totales, camas, unids_pedido, unids_cama, precio_por_cama, costo_materiales, insumos_extra, mano_obra, tiempo_proy, costo_unidad_pdf, nombre='', costo_prod_pieza=None, costo_prod_total=None, empresa_json=''):
         try:
             file_types = ('Archivos PDF (*.pdf)',)
             fname = f'Cotizacion ({nombre}).pdf' if nombre else 'Cotizacion_Proyecto.pdf'
@@ -631,8 +801,9 @@ class Api:
                 
             pdf = FPDF()
             pdf.add_page()
+            nota_pie = self._dibujar_empresa(pdf, empresa_json)
             pdf.set_font("Arial", 'B', 16)
-            pdf.cell(200, 10, txt="Cotización de Proyecto 3D", ln=1, align='C')
+            pdf.cell(200, 10, txt=_texto_pdf("Cotización de Proyecto 3D"), ln=1, align='C')
             pdf.ln(10)
             
             pdf.set_font("Arial", size=12)
@@ -669,7 +840,9 @@ class Api:
             pdf.set_font("Arial", size=14)
             pdf.set_text_color(20, 160, 40)
             pdf.cell(100, 10, txt=f"{total_proyecto}", ln=1)
-            
+            pdf.set_text_color(0, 0, 0)
+
+            self._nota_pie(pdf, nota_pie)
             pdf.output(path)
             return True
         except Exception as e:
@@ -699,7 +872,7 @@ class Api:
             print("Error exportando Excel de Proyecto:", e)
             return False
 
-    def export_megaproject_pdf(self, payload):
+    def export_megaproject_pdf(self, payload, empresa_json=''):
         try:
             data = json.loads(payload)
             file_types = ('Archivos PDF (*.pdf)',)
@@ -715,9 +888,10 @@ class Api:
                 
             pdf = FPDF()
             pdf.add_page()
+            nota_pie = self._dibujar_empresa(pdf, empresa_json)
             pdf.set_font("Arial", 'B', 16)
             nombre_proyecto = data.get('nombre', 'Mega Proyecto')
-            pdf.cell(200, 10, txt=f"Cotización - {nombre_proyecto}", ln=1, align='C')
+            pdf.cell(200, 10, txt=_texto_pdf(f"Cotización - {nombre_proyecto}"), ln=1, align='C')
             pdf.ln(10)
             
             pdf.set_font("Arial", size=12)
@@ -763,8 +937,10 @@ class Api:
             pdf.ln(5)
             pdf.set_font("Arial", 'B', 16)
             pdf.set_text_color(20, 160, 40)
-            pdf.cell(100, 10, txt=f"TOTAL A COBRAR MEGA PROYECTO: {totales.get('total', '')}", ln=1)
-            
+            pdf.cell(100, 10, txt=_texto_pdf(f"TOTAL A COBRAR MEGA PROYECTO: {totales.get('total', '')}"), ln=1)
+            pdf.set_text_color(0, 0, 0)
+
+            self._nota_pie(pdf, nota_pie)
             pdf.output(path)
             return True
         except Exception as e:

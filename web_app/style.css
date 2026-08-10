@@ -12,7 +12,50 @@
     --success-hover: #a8dab5;
     --border: #3c4043;
     --input-bg: #202124;
+    /* Tonos que dependen del tema y no son colores de marca */
+    --hundido: rgba(0, 0, 0, 0.2);
+    --realce: rgba(255, 255, 255, 0.06);
+    --aviso-texto: #fde047;
+    --aviso-fondo: rgba(234, 179, 8, 0.1);
+    --aviso-borde: #ca8a04;
+    --sombra: rgba(0, 0, 0, 0.5);
 }
+
+/* ===== MODO CLARO ===== */
+:root[data-theme="light"] {
+    --bg-main: #f1f3f5;
+    --bg-card: #ffffff;
+    --text-main: #1f2328;
+    --text-muted: #5b6470;
+    --primary: #1a73e8;
+    --primary-hover: #1557b0;
+    --danger: #d93025;
+    --danger-hover: #b3271d;
+    --success: #188038;
+    --success-hover: #0f6b2c;
+    --border: #d6dae0;
+    --input-bg: #ffffff;
+    --hundido: rgba(0, 0, 0, 0.04);
+    --realce: rgba(0, 0, 0, 0.05);
+    --aviso-texto: #7a5c00;
+    --aviso-fondo: rgba(234, 179, 8, 0.16);
+    --aviso-borde: #c99a06;
+    --sombra: rgba(0, 0, 0, 0.18);
+}
+/* El globo de ayuda y la lista desplegable van sobre fondo claro */
+:root[data-theme="light"] .help-tip { background: #ffffff; color: var(--text-main); }
+:root[data-theme="light"] .final-price { background: rgba(24, 128, 56, 0.08); border-color: rgba(24, 128, 56, 0.25); }
+:root[data-theme="light"] .ganancia-item,
+:root[data-theme="light"] .ganancia-item .val { color: #a16207; }
+:root[data-theme="light"] .bobina-warn { color: #a16207; }
+:root[data-theme="light"] .update-bar { background: linear-gradient(90deg, rgba(26,115,232,0.14), rgba(26,115,232,0.06)); }
+:root[data-theme="light"] .version-fijada { color: var(--aviso-texto); }
+:root[data-theme="light"] .dolar-alert label { color: #7a5c00; }
+:root[data-theme="light"] .print-config-body input[type="checkbox"]:checked::after { color: #ffffff; }
+/* En claro se usa el logo original; en oscuro, la versión aclarada */
+:root[data-theme="light"] .marca-logo,
+:root[data-theme="light"] .pie-logo { content: url("printoverse-logo-claro.png"); }
+/* ===== FIN MODO CLARO ===== */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -168,6 +211,12 @@ select {
 select:hover {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23f8fafc' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 6l4.5 4.5L12.5 6'/%3E%3C/svg%3E");
 }
+:root[data-theme="light"] select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%235b6470' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 6l4.5 4.5L12.5 6'/%3E%3C/svg%3E");
+}
+:root[data-theme="light"] select:hover {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%231f2328' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 6l4.5 4.5L12.5 6'/%3E%3C/svg%3E");
+}
 /* Las listas desplegadas las dibuja Windows, no el CSS: hay que darles color
    a mano o salen en blanco sobre blanco. */
 select option {
@@ -183,8 +232,8 @@ input:focus, select:focus { outline: none; border-color: var(--primary); }
 .input-with-select input { border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; min-width: 0; }
 .input-with-select select { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 0; background-color: var(--input-bg); width: auto; }
 
-.dolar-alert { background-color: rgba(234, 179, 8, 0.1); border: 1px solid #ca8a04; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; margin-bottom: 1rem; }
-.dolar-alert label { color: #fde047; }
+.dolar-alert { background-color: var(--aviso-fondo); border: 1px solid var(--aviso-borde); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; margin-bottom: 1rem; }
+.dolar-alert label { color: var(--aviso-texto); }
 
 .profiles-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
 .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
@@ -255,6 +304,14 @@ input:checked + .slider.round:before { transform: translateX(20px); }
     gap: 0.75rem;
 }
 .save-piece-bar select { width: 100%; }
+/* Los botones de guardar/renombrar/eliminar reparten todo el ancho del recuadro */
+.save-piece-bar .btn-group { gap: 0.6rem; }
+.save-piece-bar .btn-group .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.7rem 0.5rem;
+    font-size: 0.9rem;
+}
 
 /* Badge opcional */
 .badge-optional {
@@ -573,6 +630,9 @@ input:checked + .slider.round:before { transform: translateX(20px); }
     gap: 1.5rem;
     max-width: 1600px;
     margin: 0 auto;
+    /* Sin esto queda el "align-items: start" de la maqueta vieja y cada bloque
+       se encoge a su contenido: por eso Proyecto salía más angosto que Pieza. */
+    align-items: stretch;
 }
 
 /* Eliminar el comportamiento de columnas viejas */
@@ -1044,11 +1104,11 @@ body.con-aviso-update { padding-top: 3.75rem; }
 
 .version-fijada {
     padding: 0.7rem 0.8rem;
-    border: 1px solid #ca8a04;
-    background: rgba(234, 179, 8, 0.1);
+    border: 1px solid var(--aviso-borde);
+    background: var(--aviso-fondo);
     border-radius: 0.375rem;
     font-size: 0.82rem;
-    color: #fde047;
+    color: var(--aviso-texto);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -1056,3 +1116,146 @@ body.con-aviso-update { padding-top: 3.75rem; }
 }
 /* ===== FIN AVISOS DE ACTUALIZACIÓN ===== */
 /* ===== END BUSCADOR PIEZAS + BOBINAS ===== */
+
+/* ===== AJUSTES DE LA APLICACIÓN ===== */
+.btn-ajustes {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 20;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.45rem 0.55rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+.btn-ajustes:hover { color: var(--primary); border-color: var(--primary); background: var(--realce); }
+.main-container { position: relative; }
+
+.ajustes-content { max-width: 40rem; width: 94%; padding: 1.25rem; }
+.ajustes-tabs {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+}
+.ajustes-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 0.5rem 0.9rem;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.ajustes-tab:hover { color: var(--text-main); }
+.ajustes-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+.ajustes-cuerpo { max-height: 26rem; overflow-y: auto; padding-right: 0.25rem; }
+.ajustes-nota { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.5; }
+.ajustes-grid { margin-top: 0.5rem; }
+.ajustes-textarea {
+    background: var(--input-bg); border: 1px solid var(--border); border-radius: 0.375rem;
+    color: var(--text-main); font-family: inherit; font-size: 0.9rem; padding: 0.5rem 0.75rem;
+    width: 100%; resize: vertical;
+}
+.ajustes-textarea:focus { outline: none; border-color: var(--primary); }
+
+.ajustes-fila-sel { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+.ajustes-fila-sel select { flex: 1; }
+.ajustes-fila-sel .btn { flex: 0 0 auto; }
+
+.ajustes-logo-fila {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.85rem;
+    border: 1px dashed var(--border);
+    border-radius: 0.4rem;
+    margin-bottom: 1rem;
+}
+.ajustes-logo-caja {
+    width: 6.5rem; height: 4.5rem;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--hundido);
+    border-radius: 0.35rem;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+.ajustes-logo-caja img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.ajustes-logo-caja span { font-size: 0.75rem; color: var(--text-muted); }
+.ajustes-logo-acciones { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; }
+.ajustes-logo-acciones .ajustes-nota { margin: 0; }
+
+.ajustes-bloque { padding: 0.85rem 0; border-bottom: 1px solid var(--border); }
+.ajustes-bloque:last-child { border-bottom: 0; }
+.ajustes-bloque h4 { font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--text-main); }
+
+.tema-opciones { display: flex; gap: 0.5rem; }
+.tema-btn {
+    flex: 1;
+    padding: 0.7rem 0.5rem;
+    background: var(--hundido);
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.tema-btn:hover { color: var(--text-main); }
+.tema-btn.activo {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(138, 180, 248, 0.12);
+    font-weight: 600;
+}
+
+.copias-lista { display: flex; flex-direction: column; gap: 0.4rem; }
+.copia-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 0.35rem;
+    font-size: 0.85rem;
+}
+
+/* Casilla de incluir empresa en el PDF */
+.incluir-empresa {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.incluir-empresa input { width: auto; cursor: pointer; }
+.incluir-empresa-nombre { color: var(--primary); font-weight: 600; }
+.incluir-empresa input:disabled + span { opacity: 0.6; }
+/* ===== FIN AJUSTES ===== */
+
+/* Aviso de datos faltantes (informa, no bloquea) */
+.aviso-faltantes {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    padding: 0.7rem 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--aviso-borde);
+    background: var(--aviso-fondo);
+    border-radius: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--aviso-texto);
+    line-height: 1.45;
+}
+.aviso-faltantes i { font-size: 1rem; line-height: 1.3; flex: 0 0 auto; }
+.aviso-faltantes div { display: flex; flex-direction: column; gap: 0.15rem; }
+.aviso-faltantes span { color: var(--text-muted); }

@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora 3D</title>
+    <script>
+        // Se aplica antes de pintar nada para que no haya un parpadeo oscuro
+        // al abrir la app en modo claro.
+        try {
+            var t = localStorage.getItem('calculadora3d_tema');
+            if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    </script>
     <link rel="stylesheet" href="bootstrap-icons.css">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -53,7 +61,7 @@
                         </div>
                     </div>
                     <!-- Gestor de Filamentos -->
-                    <div class="filamentos-manager-section" style="grid-column: 1 / -1; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--border); border-radius: 0.5rem; background: rgba(0,0,0,0.2);">
+                    <div class="filamentos-manager-section" style="grid-column: 1 / -1; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--hundido);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3 style="margin: 0; font-size: 1.1rem; color: var(--primary);">Base de Datos de Filamentos</h3>
                         </div>
@@ -617,6 +625,7 @@
                     <select id="pieceSelect" class="piece-select-hidden" tabindex="-1" aria-hidden="true"><option value="">-- Cargar Pieza Guardada --</option></select>
                     <div class="btn-group">
                         <button id="btnSavePiece" class="btn btn-primary">Guardar Pieza</button>
+                        <button id="btnRenamePiece" class="btn btn-outline">Renombrar</button>
                         <button id="btnDuplicatePiece" class="btn btn-outline">Duplicar</button>
                         <button id="btnDeletePiece" class="btn btn-danger">Eliminar Pieza</button>
                     </div>
@@ -757,6 +766,7 @@
                     <select id="projectSelect"><option value="">-- Cargar Proyecto Guardado --</option></select>
                     <div class="btn-group">
                         <button id="btnSaveProject" class="btn btn-primary">Guardar Proyecto</button>
+                        <button id="btnRenameProject" class="btn btn-outline">Renombrar</button>
                         <button id="btnDeleteProject" class="btn btn-danger">Eliminar Proyecto</button>
                     </div>
                 </div>
@@ -906,6 +916,7 @@
                     <select id="megaProjectSelect"><option value="">-- Cargar Mega Proyecto --</option></select>
                     <div class="btn-group">
                         <button id="btnSaveMegaProject" class="btn btn-primary">Guardar Mega Proyecto</button>
+                        <button id="btnRenameMegaProject" class="btn btn-outline">Renombrar</button>
                         <button id="btnDeleteMegaProject" class="btn btn-danger">Borrar</button>
                     </div>
                 </div>
@@ -991,6 +1002,19 @@
         </div>
     </div>
 
+    <!-- Modal Renombrar -->
+    <div id="renameModal" class="modal">
+        <div class="modal-content">
+            <h3 id="renameTitle">Renombrar</h3>
+            <p id="renameHint" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;"></p>
+            <input type="text" id="renameInput" placeholder="Nuevo nombre">
+            <div class="modal-btn-group">
+                <button id="btnConfirmRename" class="btn btn-primary">Renombrar</button>
+                <button id="btnCancelRename" class="btn btn-outline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Mega Proyecto -->
     <div id="megaProjectModal" class="modal">
         <div class="modal-content">
@@ -1013,6 +1037,8 @@
     
     <script src="filamentos_logic.js"></script>
     <script src="app.js"></script>
+    <script src="combobox.js"></script>
+    <script src="ajustes.js"></script>
     <script src="ayuda.js"></script>
     <script src="actualizacion.js"></script>
 
