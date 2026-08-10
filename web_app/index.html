@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora 3D</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container main-container">
+        <header>
+            <h1>Calculadora de Impresión 3D</h1>
+        </header>
+
+        <div class="app-layout">
+                    <!-- Sección 1: Ajustes Fijos -->
+            <section class="card ajustes-card">
+                <div class="card-header collapsible-header" id="ajustesHeader" onclick="toggleAjustes()">
+                    <h2>1. Ajustes Fijos</h2>
+                    <span class="collapse-arrow" id="ajustesArrow">▼</span>
+                </div>
+                <div id="ajustesBody">
+                
+                <div class="profiles-group">
+                    <select id="profileSelect">
+                        <option value="">-- Seleccionar Perfil --</option>
+                    </select>
+                    <div class="btn-group">
+                        <button id="btnSaveProfile" class="btn btn-primary">Guardar Perfil</button>
+                        <button id="btnNewProfile" class="btn btn-outline">Nuevo Perfil</button>
+                        <button id="btnDeleteProfile" class="btn btn-danger">Eliminar Perfil</button>
+                        <button id="btnExportProfiles" class="btn btn-outline" style="margin-left:auto;">Exportar Perfiles</button>
+                        <button id="btnImportProfiles" class="btn btn-outline">Importar Perfiles</button>
+                    </div>
+                </div>
+
+                <div class="input-grid">
+                    <!-- Filamento con moneda -->
+                    <div class="input-group" id="legacyPrecioKgGroup" style="display:none;">
+                        <label for="precioKg">Filamento por kg</label>
+                        <div class="input-with-select">
+                            <input type="number" id="precioKg" min="0" step="0.01">
+                            <select id="monedaFilamento" class="currency-selector">
+                                <option value="COP">COP</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Gestor de Filamentos -->
+                    <div class="filamentos-manager-section" style="grid-column: 1 / -1; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--border); border-radius: 0.5rem; background: rgba(0,0,0,0.2);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--primary);">Base de Datos de Filamentos</h3>
+                        </div>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Marca</label>
+                                <input type="text" id="filMarca" placeholder="Ej: Esun">
+                            </div>
+                            <div class="input-group">
+                                <label>Color</label>
+                                <input type="text" id="filColor" placeholder="Ej: Rojo">
+                            </div>
+                            <div class="input-group">
+                                <label>Tipo</label>
+                                <select id="filTipo">
+                                    <option value="PLA">PLA</option>
+                                    <option value="PETG">PETG</option>
+                                    <option value="ABS">ABS</option>
+                                    <option value="TPU">TPU</option>
+                                    <option value="ASA">ASA</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Precio por Kg</label>
+                                <div class="input-with-select">
+                                    <input type="number" id="filPrecio" min="0" step="0.01">
+                                    <select id="filMoneda" class="currency-selector">
+                                        <option value="COP">COP</option>
+                                        <option value="USD">USD</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="btnSaveFilamento" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">+ Guardar Filamento</button>
+                        <div id="filamentosList" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto;">
+                            <!-- Items dinámicos -->
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="precioKwh">Precio kWh (COP)</label>
+                        <input type="number" id="precioKwh" min="0" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="consumoWatts">Consumo (Watts)</label>
+                        <input type="number" id="consumoWatts" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="desgasteMaquina">Desgaste Máquina (Horas)</label>
+                        <input type="number" id="desgasteMaquina" min="1" placeholder="Ej: 5000">
+                    </div>
+                    <!-- Repuestos con moneda -->
+                    <div class="input-group">
+                        <label for="precioRepuestos">Precio Repuestos</label>
+                        <div class="input-with-select">
+                            <input type="number" id="precioRepuestos" min="0" step="0.01">
+                            <select id="monedaRepuestos" class="currency-selector">
+                                <option value="COP">COP</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="manoObraHora">Mano de obra/hora (COP)</label>
+                        <input type="number" id="manoObraHora" min="0" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="margenError">% Margen Error</label>
+                        <input type="number" id="margenError" min="0" max="100">
+                    </div>
+                </div>
+                </div><!-- /ajustesBody -->
+            </section>
+
+            <!-- Sección Dólar (Dinámica) -->
+            <div id="dolarSection" class="dolar-alert" style="display: none;">
+                <div class="input-group">
+                    <label for="precioDolar">Dólar configurado para USD (COP)</label>
+                    <input type="number" id="precioDolar" placeholder="Por defecto: 3600" min="1">
+                </div>
+            </div>
+
+            <!-- PAIRED ROW: Pieza + Resultados -->
+            <div class="paired-row">
+            <div class="input-panel">
+            <!-- Sección 2: Datos de la Pieza (con tabs) -->
+            <section class="card piece-card">
+                <div class="card-header">
+                    <h2>2. Datos de la Pieza</h2>
+                </div>
+                <!-- NAV TABS -->
+                <div class="piece-tabs-nav" id="pieceTabs">
+                    <button class="piece-tab-btn active" data-tab="tabPrincipal">⚙️ Principal</button>
+                    <button class="piece-tab-btn" data-tab="tabPartes">🧩 Partes Extra<span class="tab-badge" id="badgePartes" style="display:none">0</span></button>
+                    <button class="piece-tab-btn" data-tab="tabInsumos">📦 Insumos<span class="tab-badge" id="badgeInsumos" style="display:none">0</span></button>
+                    <button class="piece-tab-btn" data-tab="tabConfig">🖨️ Config</button>
+                </div>
+                <!-- TAB: PRINCIPAL -->
+                <div class="piece-tab-content active" id="tabPrincipal">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Tiempo de impresión (Horas / Minutos)</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" id="horasImpresion" min="0" step="1" placeholder="Hrs" style="flex: 1; border-radius: 0.375rem;">
+                            <input type="number" id="minutosImpresion" min="0" max="59" step="1" placeholder="Min" style="flex: 1; border-radius: 0.375rem;">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group" style="grid-column: 1 / -1;">
+                        <label>Material Principal</label>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <select id="mainFilamentoSelect" style="flex: 2; min-width: 150px;">
+                                <option value="">-- Seleccione un filamento --</option>
+                            </select>
+                            <input type="number" id="gramosFilamento" min="0" step="1" placeholder="Gramos" style="flex: 1; min-width: 80px;">
+                            <!-- Hidden legacy color for backwards compat -->
+                            <input type="hidden" id="colorPrincipal" value="">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group" style="grid-column: 1 / -1;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="checkVariosFilamentos" style="width: auto; cursor: pointer;">
+                            Varios Filamentos (misma pieza)
+                        </label>
+                    </div>
+
+                    <div id="variosFilamentosSection" style="display: none; grid-column: 1 / -1; padding-left: 1rem; border-left: 2px solid var(--border);">
+                        <div id="filamentosExtraContainer"></div>
+                        <button type="button" id="btnAñadirFilamentoExtra" class="btn btn-outline" style="margin-top: 0.5rem; font-size: 0.8rem; padding: 0.35rem 0.75rem;">+ Añadir Filamento Extra</button>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Tiempo Preparador / Modelado (Fijo x Proyecto)</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" id="horasInvertidas" min="0" step="1" placeholder="Hrs" style="flex: 1; border-radius: 0.375rem;">
+                            <input type="number" id="minutosInvertidas" min="0" max="59" step="1" placeholder="Min" style="flex: 1; border-radius: 0.375rem;">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Tiempo Operario (Por Cama)</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" id="minutosOperario" min="0" step="1" placeholder="Minutos" style="flex: 1; border-radius: 0.375rem;">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Tiempo Prep. Máquina (Calentamiento x Cama)</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" id="minutosPrepMaquina" min="0" step="1" placeholder="Minutos" style="flex: 1; border-radius: 0.375rem;">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="unidadesCama">Unidades por cama (1 impresión)</label>
+                        <input type="number" id="unidadesCama" min="1" step="1" placeholder="Ej: 26">
+                    </div>
+                </div>
+
+                </div><!-- /tabPrincipal -->
+                <!-- TAB: PARTES EXTRA -->
+                <div class="piece-tab-content" id="tabPartes">
+                <div class="partes-extra-section">
+                    <div class="tab-section-header">
+                        <span>🧩 Partes Extra (Diferente Cama)</span>
+                        <button type="button" id="btnAddParte" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">+ Agregar Parte</button>
+                    </div>
+                    <p class="section-hint" style="margin-bottom:1rem;">Cada parte se imprime en una cama diferente. El tiempo de operario y prep. máquina se multiplica automáticamente.</p>
+                    <div id="partesExtraContainer"></div>
+                </div>
+
+                </div><!-- /tabPartes -->
+                <!-- TAB: INSUMOS -->
+                <div class="piece-tab-content" id="tabInsumos">
+                <div class="insumos-extra-section">
+                    <div class="tab-section-header">
+                        <span>📦 Insumos Extra</span>
+                        <button type="button" id="btnAddInsumoPieza" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">+ Agregar insumo</button>
+                    </div>
+                    <div id="insumosExtraContainerPieza"></div>
+                    <!-- Resumen de insumos -->
+                    <div id="insumosResumenPieza" class="insumos-resumen" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(138, 180, 248, 0.06); border: 1px solid var(--border); border-radius: 0.375rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Costo total insumos extra:</span>
+                            <span id="insumoCostoTotalPieza" style="font-family: monospace; color: var(--text-main); font-weight: 600;">$0</span>
+                        </div>
+                        <div class="input-group" style="margin-top: 0.5rem;">
+                            <label for="insumosACobrar">Precio a cobrar por insumos extra</label>
+                            <div class="input-with-select">
+                                <input type="number" id="insumosACobrar" min="0" step="0.01" placeholder="Dejar vacío = costo real">
+                                <select id="monedaInsumosACobrar" class="currency-selector">
+                                    <option value="COP">COP</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                </div><!-- /tabInsumos -->
+                <!-- TAB: CONFIG IMPRESIÓN -->
+                <div class="piece-tab-content" id="tabConfig">
+                <!-- Configuración de Impresión (Opcional / Colapsable) -->
+                <div class="print-config-section">
+                    <div class="print-config-toggle" id="printConfigToggle">
+                        <div class="print-config-toggle-left">
+                            <span class="print-config-arrow" id="printConfigArrow">▶</span>
+                            <span class="print-config-title">Configuración de Impresión</span>
+                        </div>
+                        <span class="badge-optional">Opcional</span>
+                    </div>
+                    <div class="print-config-body" id="printConfigBody" style="display: none;">
+                        
+                        <!-- Sub-sección: Calidad -->
+                        <div class="print-subsection">
+                            <div class="print-subsection-header" data-target="subsCalidad">
+                                <span class="print-subsection-arrow">▶</span>
+                                <span>🎯 Calidad</span>
+                            </div>
+                            <div class="print-subsection-body" id="subsCalidad" style="display: none;">
+                                <div class="input-grid">
+                                    <div class="input-group">
+                                        <label for="cfgAlturaCapa">Altura de capa (mm)</label>
+                                        <input type="number" id="cfgAlturaCapa" min="0.05" max="1" step="0.05" placeholder="Ej: 0.2">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgAnchoLineaExterno">Perímetro externo (mm)</label>
+                                        <input type="number" id="cfgAnchoLineaExterno" min="0.1" max="2" step="0.05" placeholder="Ej: 0.4">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgAnchoLineaInterno">Perímetro interno (mm)</label>
+                                        <input type="number" id="cfgAnchoLineaInterno" min="0.1" max="2" step="0.05" placeholder="Ej: 0.4">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgRellenoSolidoSuperior">Relleno sólido superior (mm)</label>
+                                        <input type="number" id="cfgRellenoSolidoSuperior" min="0" max="50" step="0.1" placeholder="Ej: 0.8">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgTipoAlisado">Tipo de alisado</label>
+                                        <select id="cfgTipoAlisado">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="Sin alisado">Sin alisado</option>
+                                            <option value="Todas las superficies superiores">Todas las superficies superiores</option>
+                                            <option value="Sólo la superficie superior">Sólo la superficie superior</option>
+                                            <option value="Todas las capas sólidas">Todas las capas sólidas</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-sección: Fuerza -->
+                        <div class="print-subsection">
+                            <div class="print-subsection-header" data-target="subsFuerza">
+                                <span class="print-subsection-arrow">▶</span>
+                                <span>💪 Fuerza</span>
+                            </div>
+                            <div class="print-subsection-body" id="subsFuerza" style="display: none;">
+                                <div class="input-grid">
+                                    <div class="input-group">
+                                        <label for="cfgBuclesPerimetro">Bucles de perímetro</label>
+                                        <input type="number" id="cfgBuclesPerimetro" min="1" max="20" step="1" placeholder="Ej: 3">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgDeteccionDelgados" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                                            Detección perímetros delgados
+                                            <input type="checkbox" id="cfgDeteccionDelgados" style="width:auto; cursor:pointer;">
+                                        </label>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgCapasCubiertaSuperior">Capas cubierta superior</label>
+                                        <input type="number" id="cfgCapasCubiertaSuperior" min="0" max="50" step="1" placeholder="Ej: 5">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgPatronCubiertaSuperior">Patrón relleno cubierta superior</label>
+                                        <select id="cfgPatronCubiertaSuperior">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="Monotónico">Monotónico</option>
+                                            <option value="Líneas monotónicas">Líneas monotónicas</option>
+                                            <option value="Rectilíneo">Rectilíneo</option>
+                                            <option value="Rectilíneo alineado">Rectilíneo alineado</option>
+                                            <option value="Concéntrico">Concéntrico</option>
+                                            <option value="Curva de Hilbert">Curva de Hilbert</option>
+                                            <option value="Espiral de Arquímedes">Espiral de Arquímedes</option>
+                                            <option value="Octograma en Espiral">Octograma en Espiral</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgDensidadRelleno">Densidad de relleno (%)</label>
+                                        <input type="number" id="cfgDensidadRelleno" min="0" max="100" step="1" placeholder="Ej: 15">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgPatronRelleno">Patrón de relleno</label>
+                                        <select id="cfgPatronRelleno">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="Rectilíneo">Rectilíneo</option>
+                                            <option value="Rectilíneo alineado">Rectilíneo alineado</option>
+                                            <option value="Zig Zag">Zig Zag</option>
+                                            <option value="Cross Zag">Cross Zag</option>
+                                            <option value="Locked Zag">Locked Zag</option>
+                                            <option value="Lineal">Lineal</option>
+                                            <option value="Rejilla">Rejilla</option>
+                                            <option value="Triángulos">Triángulos</option>
+                                            <option value="Tri-hexágono">Tri-hexágono</option>
+                                            <option value="Cúbico">Cúbico</option>
+                                            <option value="Cúbico Adaptativo">Cúbico Adaptativo</option>
+                                            <option value="Quarter Cubic">Quarter Cubic</option>
+                                            <option value="Soporte Cúbico">Soporte Cúbico</option>
+                                            <option value="Rayo">Rayo</option>
+                                            <option value="Panal de abeja">Panal de abeja</option>
+                                            <option value="Panel 3D">Panel 3D</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-sección: Velocidad -->
+                        <div class="print-subsection">
+                            <div class="print-subsection-header" data-target="subsVelocidad">
+                                <span class="print-subsection-arrow">▶</span>
+                                <span>⚡ Velocidad</span>
+                            </div>
+                            <div class="print-subsection-body" id="subsVelocidad" style="display: none;">
+                                <div class="input-grid" style="grid-template-columns: 1fr;">
+                                    <div class="input-group">
+                                        <label for="cfgVelocidad">Modo de velocidad</label>
+                                        <select id="cfgVelocidad">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="Normal">Normal</option>
+                                            <option value="Mitad">Mitad</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-sección: Soportes -->
+                        <div class="print-subsection">
+                            <div class="print-subsection-header" data-target="subsSoportes">
+                                <span class="print-subsection-arrow">▶</span>
+                                <span>🏗️ Soportes</span>
+                            </div>
+                            <div class="print-subsection-body" id="subsSoportes" style="display: none;">
+                                <div class="input-grid">
+                                    <div class="input-group" style="grid-column: 1 / -1;">
+                                        <label for="cfgLlevaSoportes" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                                            ¿Lleva soportes?
+                                            <input type="checkbox" id="cfgLlevaSoportes" style="width:auto; cursor:pointer;">
+                                        </label>
+                                    </div>
+                                    <div class="input-group cfg-soportes-detail" style="display:none;">
+                                        <label for="cfgCapasInterfazSuperior">Capas interfaz superior</label>
+                                        <select id="cfgCapasInterfazSuperior">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group cfg-soportes-detail" style="display:none;">
+                                        <label for="cfgCapasInterfazInferior">Capas interfaz inferior</label>
+                                        <select id="cfgCapasInterfazInferior">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Configuración de Capas Distintas (Opcional / Colapsable) -->
+                <div class="print-config-section">
+                    <div class="print-config-toggle" id="topLayerConfigToggle">
+                        <div class="print-config-toggle-left">
+                            <span class="print-config-arrow" id="topLayerConfigArrow">▶</span>
+                            <span class="print-config-title">Configuración Capas Distintas</span>
+                        </div>
+                        <span class="badge-optional">Opcional</span>
+                    </div>
+                    <div class="print-config-body" id="topLayerConfigBody" style="display: none;">
+                        
+                        <!-- Sub-sección: Calidad -->
+                        <div class="print-subsection">
+                            <div class="print-subsection-header" data-target="subsCapasCalidad">
+                                <span class="print-subsection-arrow">▶</span>
+                                <span>🎯 Calidad</span>
+                            </div>
+                            <div class="print-subsection-body" id="subsCapasCalidad" style="display: none;">
+                                <div class="input-grid">
+                                    <div class="input-group">
+                                        <label for="cfgCapasAnchoLineaExterno">Perímetro externo (mm)</label>
+                                        <input type="number" id="cfgCapasAnchoLineaExterno" min="0.1" max="2" step="0.05" placeholder="Ej: 0.4">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgCapasAnchoLineaInterno">Perímetro interno (mm)</label>
+                                        <input type="number" id="cfgCapasAnchoLineaInterno" min="0.1" max="2" step="0.05" placeholder="Ej: 0.4">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgCapasRellenoSolidoSuperior">Relleno sólido superior (mm)</label>
+                                        <input type="number" id="cfgCapasRellenoSolidoSuperior" min="0" max="50" step="0.1" placeholder="Ej: 0.8">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgCapasTipoAlisado">Tipo de alisado</label>
+                                        <select id="cfgCapasTipoAlisado">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="Sin alisado">Sin alisado</option>
+                                            <option value="Todas las superficies superiores">Todas las superficies superiores</option>
+                                            <option value="Sólo la superficie superior">Sólo la superficie superior</option>
+                                            <option value="Todas las capas sólidas">Todas las capas sólidas</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-sección: Fuerza -->
+                        <div class="print-subsection">
+                            <div class="print-subsection-header" data-target="subsCapasFuerza">
+                                <span class="print-subsection-arrow">▶</span>
+                                <span>💪 Fuerza</span>
+                            </div>
+                            <div class="print-subsection-body" id="subsCapasFuerza" style="display: none;">
+                                <div class="input-grid">
+                                    <div class="input-group">
+                                        <label for="cfgCapasBuclesPerimetro">Bucles de perímetro</label>
+                                        <input type="number" id="cfgCapasBuclesPerimetro" min="1" max="20" step="1" placeholder="Ej: 3">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgCapasDeteccionDelgados" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                                            Detección perímetros delgados
+                                            <input type="checkbox" id="cfgCapasDeteccionDelgados" style="width:auto; cursor:pointer;">
+                                        </label>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgCapasDistCubiertaSuperior">Capas cubierta superior</label>
+                                        <input type="number" id="cfgCapasDistCubiertaSuperior" min="0" max="50" step="1" placeholder="Ej: 5">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgCapasPatronCubiertaSuperior">Patrón relleno cubierta superior</label>
+                                        <select id="cfgCapasPatronCubiertaSuperior">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="Monotónico">Monotónico</option>
+                                            <option value="Líneas monotónicas">Líneas monotónicas</option>
+                                            <option value="Rectilíneo">Rectilíneo</option>
+                                            <option value="Rectilíneo alineado">Rectilíneo alineado</option>
+                                            <option value="Concéntrico">Concéntrico</option>
+                                            <option value="Curva de Hilbert">Curva de Hilbert</option>
+                                            <option value="Espiral de Arquímedes">Espiral de Arquímedes</option>
+                                            <option value="Octograma en Espiral">Octograma en Espiral</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgCapasDensidadRelleno">Densidad de relleno (%)</label>
+                                        <input type="number" id="cfgCapasDensidadRelleno" min="0" max="100" step="1" placeholder="Ej: 15">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="cfgCapasPatronRelleno">Patrón de relleno</label>
+                                        <select id="cfgCapasPatronRelleno">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="Rectilíneo">Rectilíneo</option>
+                                            <option value="Rectilíneo alineado">Rectilíneo alineado</option>
+                                            <option value="Zig Zag">Zig Zag</option>
+                                            <option value="Cross Zag">Cross Zag</option>
+                                            <option value="Locked Zag">Locked Zag</option>
+                                            <option value="Lineal">Lineal</option>
+                                            <option value="Rejilla">Rejilla</option>
+                                            <option value="Triángulos">Triángulos</option>
+                                            <option value="Tri-hexágono">Tri-hexágono</option>
+                                            <option value="Cúbico">Cúbico</option>
+                                            <option value="Cúbico Adaptativo">Cúbico Adaptativo</option>
+                                            <option value="Quarter Cubic">Quarter Cubic</option>
+                                            <option value="Soporte Cúbico">Soporte Cúbico</option>
+                                            <option value="Rayo">Rayo</option>
+                                            <option value="Panal de abeja">Panal de abeja</option>
+                                            <option value="Panel 3D">Panel 3D</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-sección: Velocidad -->
+                        <div class="print-subsection">
+                            <div class="print-subsection-header" data-target="subsCapasVelocidad">
+                                <span class="print-subsection-arrow">▶</span>
+                                <span>⚡ Velocidad</span>
+                            </div>
+                            <div class="print-subsection-body" id="subsCapasVelocidad" style="display: none;">
+                                <div class="input-grid" style="grid-template-columns: 1fr;">
+                                    <div class="input-group">
+                                        <label for="cfgCapasVelocidad">Modo de velocidad</label>
+                                        <select id="cfgCapasVelocidad">
+                                            <option value="">-- Seleccionar --</option>
+                                            <option value="Normal">Normal</option>
+                                            <option value="Mitad">Mitad</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                
+                </div><!-- /tabConfig -->
+                <!-- Zona fija: Precio de venta y márgenes -->
+                <div class="piece-fixed-bottom">
+                <!-- Precio de Venta Personalizado (Pieza) -->
+                <div style="margin-top: 1rem; padding: 1rem; border: 1px dashed var(--border); border-radius: 0.5rem; background: rgba(138,180,248,0.04);">
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label for="precioVentaPieza" style="display: flex; align-items: center; gap: 0.5rem;">
+                            🏷️ Precio de Venta (c/u)
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">(Opcional — sobreescribe el "Total a Cobrar")</span>
+                        </label>
+                        <input type="number" id="precioVentaPieza" min="0" step="0.01" placeholder="Dejar vacío = usar precio calculado">
+                    </div>
+                </div>
+
+                <div class="margin-section">
+                    <div class="input-group">
+                        <label for="margenGanancia">Margen de Ganancia (Multiplicador)</label>
+                        <div class="slider-group">
+                            <input type="range" id="margenGananciaSlider" min="1" max="5" step="0.1" value="2">
+                            <input type="number" id="margenGanancia" min="1" step="0.1" value="2">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="redondeoMode">Redondear Final a (en COP):</label>
+                        <select id="redondeoMode">
+                            <option value="none">Sin redondeo</option>
+                            <option value="500">Múltiplos de 500</option>
+                            <option value="1000">Múltiplos de 1.000</option>
+                            <option value="5000" selected>Múltiplos de 5.000</option>
+                        </select>
+                    </div>
+                </div>
+
+                </div><!-- /piece-fixed-bottom -->
+                <!-- Guardar Pieza -->
+                <div class="save-piece-bar">
+                    <div class="piece-combo" id="pieceCombo">
+                        <div class="piece-combo-control">
+                            <input type="text" id="pieceComboInput" class="piece-combo-input" role="combobox"
+                                   aria-expanded="false" aria-autocomplete="list" aria-controls="pieceComboList"
+                                   autocomplete="off" placeholder="-- Cargar Pieza Guardada --">
+                            <span id="pieceSearchCount" class="piece-combo-count"></span>
+                            <button type="button" id="pieceComboClear" class="piece-combo-btn" title="Limpiar selección" tabindex="-1">×</button>
+                            <button type="button" id="pieceComboArrow" class="piece-combo-btn piece-combo-arrow" title="Ver piezas" tabindex="-1">▼</button>
+                        </div>
+                        <div class="piece-combo-list" id="pieceComboList" role="listbox" hidden></div>
+                    </div>
+                    <select id="pieceSelect" class="piece-select-hidden" tabindex="-1" aria-hidden="true"><option value="">-- Cargar Pieza Guardada --</option></select>
+                    <div class="btn-group">
+                        <button id="btnSavePiece" class="btn btn-primary">Guardar Pieza</button>
+                        <button id="btnDuplicatePiece" class="btn btn-outline">Duplicar</button>
+                        <button id="btnDeletePiece" class="btn btn-danger">Eliminar Pieza</button>
+                    </div>
+                </div>
+            </section>
+            </div><!-- /input-panel pieza -->
+            <div class="results-panel">
+<!-- Sección 5: Resultados -->
+            <section class="card results-card" style="display: flex; flex-direction: column;">
+                <div class="card-header results-header">
+                    <h2>5. Resultados <span style="font-size:0.75em; color:var(--text-muted); font-weight:400;">(por unidad)</span></h2>
+                    <div class="result-toggle">
+                        <span id="labelCOP" class="active">COP</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleMonedaResultados">
+                            <span class="slider round"></span>
+                        </label>
+                        <span id="labelUSD">USD</span>
+                    </div>
+                </div>
+                <div class="results-list" style="flex: 1;">
+                    <div class="result-item">
+                        <span>Precio material:</span>
+                        <span id="resMaterial" class="val">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Precio luz:</span>
+                        <span id="resLuz" class="val">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Desgaste de máquina:</span>
+                        <span id="resDesgaste" class="val">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Margen de error:</span>
+                        <span id="resError" class="val">0</span>
+                    </div>
+                    <hr>
+                    <div class="result-item highlight">
+                        <span>Costo Total Bruto (Materiales):</span>
+                        <span id="resCostoTotal" class="val">0</span>
+                    </div>
+                    <hr>
+                    <div class="result-item">
+                        <span>Insumos extra:</span>
+                        <span id="resInsumos" class="val">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span>Mano de obra:</span>
+                        <span id="resManoObra" class="val">0</span>
+                    </div>
+                    <hr>
+                    <div class="result-item">
+                        <span>Tiempo Est. Producción (1 cama):</span>
+                        <span id="resTiempoProduccion" class="val">0 h</span>
+                    </div>
+                    <div class="result-item highlight-secondary">
+                        <span id="labelCostoProduccion">Costo Total de Producción:</span>
+                        <span id="resCostoProduccion" class="val">0</span>
+                    </div>
+                    <div class="result-item" id="containerCostoProduccionCama" style="display: none;">
+                        <span>Costo Producción (cama completa):</span>
+                        <span id="resCostoProduccionCama" class="val">0</span>
+                    </div>
+                    <div class="result-item ganancia-item">
+                        <span id="labelGanancia">Ganancia neta:</span>
+                        <span id="resGanancia" class="val">0</span>
+                    </div>
+                    <div class="result-item" id="containerGananciaCama" style="display: none;">
+                        <span>Ganancia neta (cama completa):</span>
+                        <span id="resGananciaCama" class="val">0</span>
+                    </div>
+                    <div class="result-item final-price">
+                        <span id="labelTotalCobrar">Total a Cobrar (c/u):</span>
+                        <span id="resTotalCobrar" class="val">0</span>
+                    </div>
+                    <div class="result-item" id="containerTotalCobrarCama" style="display: none;">
+                        <span>Total a Cobrar (cama completa):</span>
+                        <span id="resTotalCobrarCama" class="val">0</span>
+                    </div>
+                </div>
+                
+                <div class="export-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                    <button id="btnExportPdf" class="btn btn-danger" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">
+                        Generar PDF
+                    </button>
+                    <button id="btnExportBom" class="btn btn-outline" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">Lista de Materiales</button>
+                    <button id="btnExportExcel" class="btn btn-success" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">
+                        Copia Excel
+                    </button>
+                </div>
+            </section>
+            </div><!-- /results-panel pieza -->
+            </div><!-- /paired-row pieza -->
+
+            <!-- PAIRED ROW: Proyecto + Resultados -->
+            <div class="paired-row">
+            <div class="input-panel">
+            <!-- Sección 3: Proyecto / Escalado -->
+            <section class="card" id="proyectoSection">
+                <div class="card-header">
+                    <h2>3. Proyecto (Escalado)</h2>
+                    <span class="badge-optional">Opcional</span>
+                </div>
+                <p class="section-hint">Calcula cuántas camas, horas y material necesitas para un pedido grande.</p>
+                <div class="input-grid" style="margin-top:1rem;">
+                    <div class="input-group">
+                        <label for="unidadesPedido">Unidades necesitadas</label>
+                        <input type="number" id="unidadesPedido" min="1" step="1" placeholder="Ej: 1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="precioUnitarioManual">Precio unitario personalizado (Opcional)</label>
+                        <input type="number" id="precioUnitarioManual" min="0" step="0.01" placeholder="Ej: 700">
+                    </div>
+                </div>
+
+                <div class="margin-section" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--border);">
+                    <div class="input-group">
+                        <label for="margenGananciaProyecto">Margen de Ganancia (Proyecto)</label>
+                        <div class="slider-group">
+                            <input type="range" id="margenGananciaProyectoSlider" min="1" max="5" step="0.1" value="2">
+                            <input type="number" id="margenGananciaProyecto" min="1" step="0.1" value="2">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="redondeoModeProyecto">Redondear Final a (en COP):</label>
+                        <select id="redondeoModeProyecto">
+                            <option value="none">Sin redondeo</option>
+                            <option value="500">Múltiplos de 500</option>
+                            <option value="1000">Múltiplos de 1.000</option>
+                            <option value="5000" selected>Múltiplos de 5.000</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Guardar Proyecto -->
+                <div class="save-piece-bar" style="margin-top:1.5rem; padding-top:1.5rem; border-top: 1px solid var(--border);">
+                    <select id="projectSelect"><option value="">-- Cargar Proyecto Guardado --</option></select>
+                    <div class="btn-group">
+                        <button id="btnSaveProject" class="btn btn-primary">Guardar Proyecto</button>
+                        <button id="btnDeleteProject" class="btn btn-danger">Eliminar Proyecto</button>
+                    </div>
+                </div>
+            </section>
+            </div><!-- /input-panel proyecto -->
+            <div class="results-panel" id="panelResultsProyecto">
+<!-- Resultados del Proyecto -->
+                <section class="card project-results" id="projectResults" style="display:none; margin-top: 1.5rem; flex-direction: column;">
+                <div class="card-header results-header" style="margin-bottom: 0;">
+                    <h2 style="font-size: 1.1rem; color: var(--primary);">Proyecto</h2>
+                </div>
+                    
+                    <div class="results-list">
+                        <div class="result-item">
+                            <span>Unidades por cama:</span>
+                            <span class="val" id="resUnidadesCamaProyecto">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Camas necesarias:</span>
+                            <span class="val" id="resCamas">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Unidades producidas:</span>
+                            <span class="val" id="resUnidadesProducidas">—</span>
+                        </div>
+                        <div class="result-item" id="containerUnidadesSobrantes" style="display:none;">
+                            <span>Unidades sobrantes:</span>
+                            <span class="val" id="resUnidadesSobrantes" style="color: #f9c74f;">—</span>
+                        </div>
+                        <hr>
+                        <div class="result-item">
+                            <span>Horas impresión puras:</span>
+                            <span class="val" id="resHorasTotales">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Tiempo Est. Producción:</span>
+                            <span class="val" id="resTiempoProduccionProyecto">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Gramos totales:</span>
+                            <span class="val" id="resGramosTotales">—</span>
+                        </div>
+                        <div class="result-item" id="containerBobinas">
+                            <span>🧵 Bobinas necesarias (1 kg):</span>
+                            <span class="val" id="resBobinas">—</span>
+                        </div>
+                        <hr>
+                        <div class="result-item">
+                            <span>Precio material:</span>
+                            <span class="val" id="resFilamentoProyecto">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Precio luz:</span>
+                            <span class="val" id="resLuzProyecto">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Desgaste de máquina:</span>
+                            <span class="val" id="resDesgasteProyecto">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Margen de error:</span>
+                            <span class="val" id="resMargenErrorProyecto">—</span>
+                        </div>
+                        <hr>
+                        <div class="result-item highlight">
+                            <span>Costo Total Materiales:</span>
+                            <span class="val" id="resMaterialesProyecto">—</span>
+                        </div>
+                        <hr>
+                        <div class="result-item" id="containerInsumosProyecto" style="display: none;">
+                            <span>Insumos extra:</span>
+                            <span class="val" id="resInsumosProyecto">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Mano de obra:</span>
+                            <span class="val" id="resManoObraProyecto">—</span>
+                        </div>
+                        <hr>
+                        <div class="result-item highlight-secondary">
+                            <span>Costo Producción (1 pieza):</span>
+                            <span class="val" id="resCostoProdPiezaProyecto">—</span>
+                        </div>
+                        <div class="result-item highlight-secondary">
+                            <span>Costo Producción (proyecto completo):</span>
+                            <span class="val" id="resCostoProdTotalProyecto">—</span>
+                        </div>
+                        <hr>
+                        <div class="result-item ganancia-item">
+                            <span>Ganancia del proyecto:</span>
+                            <span class="val" id="resGananciaProyecto">—</span>
+                        </div>
+                        <div class="result-item highlight-secondary">
+                            <span>Costo por unidad:</span>
+                            <span class="val" id="resCostoPorUnidad">—</span>
+                        </div>
+                        <div class="result-item final-price">
+                            <span>Total a cobrar proyecto:</span>
+                            <span class="val" id="resTotalProyecto">—</span>
+                        </div>
+                    </div>
+                    <div class="export-actions" style="margin-top: 1rem; display: flex; gap: 1rem;">
+                        <button id="btnExportProjectPdf" class="btn btn-danger" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">
+                            PDF Proyecto
+                        </button>
+                        <button id="btnExportProjectBom" class="btn btn-outline" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">
+                            Lista de Materiales
+                        </button>
+                        <button id="btnExportProjectExcel" class="btn btn-success" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">
+                            Excel Proyecto
+                        </button>
+                    </div>
+                </section>
+            </div><!-- /results-panel proyecto -->
+            </div><!-- /paired-row proyecto -->
+
+            <!-- PAIRED ROW: Mega Proyecto + Resultados -->
+            <div class="paired-row">
+            <div class="input-panel">
+            <!-- Sección 4: Mega Proyecto -->
+            <section class="card" id="megaProjectSection">
+                <div class="card-header">
+                    <h2>4. Mega Proyecto (Empresarial)</h2>
+                    <span class="badge-optional">Opcional</span>
+                </div>
+                <p class="section-hint">Agrupa múltiples proyectos guardados para un presupuesto global conjunto.</p>
+                
+                <div class="input-grid" style="margin-top:1rem;">
+                    <div class="input-group">
+                        <label for="subProjectSelect">Seleccionar Proyecto Guardado</label>
+                        <select id="subProjectSelect"><option value="">-- Proyectos Guardados --</option></select>
+                    </div>
+                    <div class="input-group" style="display: flex; align-items: flex-end;">
+                        <button id="btnAddSubProject" class="btn btn-outline" style="width: 100%;">Añadir al Mega Proyecto</button>
+                    </div>
+                </div>
+
+                <div class="mega-project-items" style="margin-top: 1.5rem;">
+                    <ul id="megaProjectList" style="list-style: none; padding: 0; margin-top: 0.5rem; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 0.375rem; padding: 0.5rem;">
+                        <li style="color: var(--text-muted); text-align: center; font-size: 0.9rem;">Lista vacía</li>
+                    </ul>
+                </div>
+
+                
+
+                <!-- Guardar Mega Proyecto -->
+                <div class="save-piece-bar" style="margin-top:1.5rem; padding-top:1.5rem; border-top: 1px solid var(--border);">
+                    <select id="megaProjectSelect"><option value="">-- Cargar Mega Proyecto --</option></select>
+                    <div class="btn-group">
+                        <button id="btnSaveMegaProject" class="btn btn-primary">Guardar Mega Proyecto</button>
+                        <button id="btnDeleteMegaProject" class="btn btn-danger">Borrar</button>
+                    </div>
+                </div>
+            </section>
+            </div><!-- /input-panel mega -->
+            <div class="results-panel" id="panelResultsMega">
+                <section class="card project-results" id="megaProjectResults" style="display:none; flex-direction: column;">
+                <div class="card-header results-header" style="margin-bottom: 0;">
+                    <h2 style="font-size: 1.1rem; color: var(--primary);">Mega Proyecto</h2>
+                </div>
+                    <div class="results-list">
+                        <div class="result-item"><span>Total de Camas:</span><span class="val" id="resMegaCamas">—</span></div>
+                        <div class="result-item"><span>Horas impresión:</span><span class="val" id="resMegaHoras">—</span></div>
+                        <div class="result-item"><span>Tiempo Est. Producción:</span><span class="val" id="resMegaTiempo">—</span></div>
+                        <div class="result-item"><span>Gramos totales:</span><span class="val" id="resMegaGramos">—</span></div>
+                        <hr>
+                        <div class="result-item"><span>Precio material:</span><span class="val" id="resMegaFilamento">—</span></div>
+                        <div class="result-item"><span>Precio luz:</span><span class="val" id="resMegaLuz">—</span></div>
+                        <div class="result-item"><span>Desgaste de máquina:</span><span class="val" id="resMegaDesgaste">—</span></div>
+                        <div class="result-item"><span>Margen de error:</span><span class="val" id="resMegaMargenError">—</span></div>
+                        <hr>
+                        <div class="result-item highlight"><span>Costo Total Materiales:</span><span class="val" id="resMegaMateriales">—</span></div>
+                        <hr>
+                        <div class="result-item" id="containerMegaInsumos" style="display: none;"><span>Insumos extra totales:</span><span class="val" id="resMegaInsumos">—</span></div>
+                        <div class="result-item"><span>Mano de obra total:</span><span class="val" id="resMegaManoObra">—</span></div>
+                        <hr>
+                        <div class="result-item highlight-secondary"><span>Costo Producción promedio (c/u):</span><span class="val" id="resMegaCostoProdPieza">—</span></div>
+                        <div class="result-item highlight-secondary"><span>Costo Producción total Mega Proyecto:</span><span class="val" id="resMegaCostoProdTotal">—</span></div>
+                        <hr>
+                        <div class="result-item ganancia-item"><span>Ganancia combinada:</span><span class="val" id="resMegaGanancia">—</span></div>
+                        <div class="result-item final-price"><span>Total a cobrar Mega Proyecto:</span><span class="val" id="resMegaTotal">—</span></div>
+                    </div>
+                    <div class="export-actions" style="margin-top: 1rem; display: flex; gap: 1rem;">
+                        <button id="btnExportMegaPdf" class="btn btn-danger" style="flex: 1; display:flex; justify-content:center; align-items:center;">PDF Mega Proyecto</button>
+                        <button id="btnExportMegaBom" class="btn btn-outline" style="flex: 1; display:flex; justify-content:center; align-items:center;">Lista de Materiales</button>
+                        <button id="btnExportMegaExcel" class="btn btn-success" style="flex: 1; display:flex; justify-content:center; align-items:center;">Excel Mega Proyecto</button>
+                    </div>
+                </section>
+            </div><!-- /results-panel mega -->
+            </div><!-- /paired-row mega -->
+        
+        <footer style="margin-top: 3rem; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
+            by: samderbrow
+        </footer>
+    </div>
+    
+    <!-- Modal Perfil -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <h3>Nombre del Perfil</h3>
+            <input type="text" id="profileNameInput" placeholder="Ej: Flashforge AD5M - PLA">
+            <div class="modal-btn-group">
+                <button id="btnConfirmSave" class="btn btn-primary">Guardar</button>
+                <button id="btnCancelSave" class="btn btn-outline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pieza -->
+    <div id="pieceModal" class="modal">
+        <div class="modal-content">
+            <h3>Nombre de la Pieza</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">Se guardarán: horas impresión, gramos, horas invertidas, insumos, unid./cama y margen de ganancia.</p>
+            <input type="text" id="pieceNameInput" placeholder="Ej: Llavero empresa X">
+            <div class="modal-btn-group">
+                <button id="btnConfirmPiece" class="btn btn-primary">Guardar</button>
+                <button id="btnCancelPiece" class="btn btn-outline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Proyecto -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <h3>Nombre del Proyecto</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">Se guardará la pieza, unidades del pedido y los resultados calculados.</p>
+            <input type="text" id="projectNameInput" placeholder="Ej: Llavero empresa X - 1000 unidades">
+            <div class="modal-btn-group">
+                <button id="btnConfirmProject" class="btn btn-primary">Guardar</button>
+                <button id="btnCancelProject" class="btn btn-outline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Mega Proyecto -->
+    <div id="megaProjectModal" class="modal">
+        <div class="modal-content">
+            <h3>Nombre del Mega Proyecto</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">Agrupa múltiples proyectos en uno solo.</p>
+            <input type="text" id="megaProjectNameInput" placeholder="Ej: Lote Empresa X">
+            <div class="modal-btn-group">
+                <button id="btnConfirmMegaProject" class="btn btn-primary">Guardar</button>
+                <button id="btnCancelMegaProject" class="btn btn-outline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Librerias Exportacion JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="exports.js"></script>
+    
+    <script src="filamentos_logic.js"></script>
+    <script src="app.js"></script>
+    <script src="ayuda.js"></script>
+    <script src="actualizacion.js"></script>
+
+
+<script>
+function toggleAjustes() {
+    const body  = document.getElementById('ajustesBody');
+    const arrow = document.getElementById('ajustesArrow');
+    const collapsed = body.style.display === 'none';
+    body.style.display = collapsed ? '' : 'none';
+    arrow.classList.toggle('collapsed', !collapsed);
+}
+</script>
+
+</body>
+</html>

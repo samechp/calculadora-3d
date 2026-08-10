@@ -1,0 +1,15 @@
+# Datos del usuario: nunca se publican
+perfiles.json
+ventana.json
+save_log.txt
+web_update/
+
+# Resultados de compilación
+build/
+dist/
+*.exe
+*.zip
+__pycache__/
+*.pyc
+.tmp/
+.publish/
