@@ -1,6 +1,6 @@
 {
   "app_version": "1.0.2",
-  "web_version": "1.0.2",
+  "web_version": "1.0.3",
   "web_files": [
     "index.html",
     "style.css",
@@ -13,5 +13,5 @@
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Logo de PrintoVerse, opcion de omitir version y de volver a una version anterior"
+  "notas": "La flecha de los desplegables ahora respeta el mismo margen que el texto"
 }
