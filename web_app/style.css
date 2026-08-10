@@ -273,7 +273,7 @@ input:checked + .slider.round:before { transform: translateX(20px); }
 }
 
 .print-config-arrow {
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     color: var(--primary);
     transition: transform 0.25s ease;
     display: inline-block;
@@ -320,7 +320,7 @@ input:checked + .slider.round:before { transform: translateX(20px); }
 }
 
 .print-subsection-arrow {
-    font-size: 0.6rem;
+    font-size: 0.8rem;
     color: var(--primary);
     transition: transform 0.2s ease;
     display: inline-block;
@@ -353,13 +353,15 @@ input:checked + .slider.round:before { transform: translateX(20px); }
     border-color: var(--primary);
 }
 .print-config-body input[type="checkbox"]:checked::after {
-    content: '✓';
+    /* Palomita de Bootstrap Icons (bi-check-lg) */
+    content: "\F633";
+    font-family: bootstrap-icons !important;
     position: absolute;
-    top: -1px;
-    left: 2px;
-    font-size: 13px;
+    top: -3px;
+    left: 0;
+    font-size: 15px;
+    line-height: 1;
     color: #202124;
-    font-weight: bold;
 }
 
 /* Insumos Extra Cards */
@@ -709,32 +711,28 @@ input:checked + .slider.round:before { transform: translateX(20px); }
 }
 .piece-combo-info {
     flex-shrink: 0;
-    width: 1.15rem;
-    height: 1.15rem;
-    border-radius: 50%;
-    border: 1px solid var(--border);
+    border: 0;
     background: transparent;
     color: var(--text-muted);
-    font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic;
-    font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.95rem;
     line-height: 1;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    padding: 0.15rem 0.25rem;
+    border-radius: 0.25rem;
+    opacity: 0.7;
 }
 /* Las piezas que ya tienen nota escrita muestran el ícono destacado */
 .piece-combo-info.has-note {
-    border-color: var(--success);
     color: var(--success);
+    opacity: 1;
 }
 .piece-combo-info:hover,
 .piece-combo-info.open {
-    border-color: var(--primary);
     color: var(--primary);
+    opacity: 1;
     background: rgba(138, 180, 248, 0.12);
 }
 
@@ -783,34 +781,40 @@ input:checked + .slider.round:before { transform: translateX(20px); }
 .bobina-warn { color: #f9c74f; font-weight: 700; }
 .bobina-ok   { color: var(--text-muted); }
 
+/* ===== ICONOS (Bootstrap Icons) ===== */
+/* Los glifos son de trazo fino, así que se ven mejor un punto más grandes
+   que el texto que acompañan. El em los mantiene proporcionales. */
+.piece-tab-btn > i.bi,
+.tab-section-header > span > i.bi,
+.print-subsection-header > span > i.bi,
+.result-item > span > i.bi { font-size: 1.1em; }
+
+/* En los botones, un poco de aire entre el ícono y la palabra */
+.btn > i.bi { margin-right: 0.1rem; }
+/* ===== FIN ICONOS ===== */
+
 /* ===== AYUDA CONTEXTUAL (ícono "i" + globo) ===== */
 .help-i {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.05rem;
-    height: 1.05rem;
     flex: 0 0 auto;
-    margin-left: 0.4rem;
+    margin-left: 0.35rem;
     padding: 0;
     vertical-align: middle;
-    border: 1px solid var(--border);
-    border-radius: 50%;
+    border: 0;
     background: transparent;
     color: var(--text-muted);
-    font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic;
-    font-weight: 700;
-    font-size: 0.72rem;
+    font-size: 0.92rem;
     line-height: 1;
     cursor: help;
-    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+    opacity: 0.65;
+    transition: color 0.15s, opacity 0.15s;
 }
 .help-i:hover,
 .help-i.open {
     color: var(--primary);
-    border-color: var(--primary);
-    background: rgba(138, 180, 248, 0.14);
+    opacity: 1;
 }
 
 /* En una fila de resultados el ícono va entre el texto y el valor:
@@ -820,7 +824,7 @@ input:checked + .slider.round:before { transform: translateX(20px); }
 /* Los títulos de sección son más grandes, el ícono los acompaña */
 h3 > .help-i,
 .tab-section-header > span > .help-i,
-.print-config-title > .help-i { width: 1.15rem; height: 1.15rem; font-size: 0.8rem; }
+.print-config-title > .help-i { font-size: 1rem; }
 
 .help-tip {
     position: fixed;

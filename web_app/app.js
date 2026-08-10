@@ -277,7 +277,7 @@ function createInsumoCard(container, data) {
     card.innerHTML = `
         <div class="insumo-card-header">
             <span>Insumo #${idx}</span>
-            <button type="button" class="btn-remove-insumo" title="Eliminar">✕</button>
+            <button type="button" class="btn-remove-insumo" title="Eliminar"><i class="bi bi-x-lg"></i></button>
         </div>
         <div class="insumo-inputs-grid">
             <div class="input-group" style="grid-column: 1 / -1;">
@@ -428,7 +428,7 @@ function createParteCard(container, data) {
     card.innerHTML = `
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-weight: bold; color: var(--text-main);">
             <span>Parte #${idx}</span>
-            <button type="button" class="btn-remove-parte" style="background: none; border: none; color: var(--danger); cursor: pointer;" title="Eliminar">✕</button>
+            <button type="button" class="btn-remove-parte" style="background: none; border: none; color: var(--danger); cursor: pointer;" title="Eliminar"><i class="bi bi-x-lg"></i></button>
         </div>
         <div class="input-grid">
             <div class="input-group">
@@ -749,7 +749,7 @@ function calculate() {
     els.resCostoTotal.innerText = render(costoTotalCOP);
     els.resInsumos.innerText = render(insExCOPUnit);
     els.resManoObra.innerText = render(cManoObraCOP);
-    els.resTiempoProduccion.innerText = formatTime(tiempoTotalPiezaConBuffer_h) + (mErr > 0 ? ' ⚠️' : '');
+    els.resTiempoProduccion.innerHTML = formatTime(tiempoTotalPiezaConBuffer_h) + (mErr > 0 ? ' <i class="bi bi-exclamation-triangle"></i>' : '');
     els.resCostoProduccion.innerText = render(costoProduccionCOP);
     els.resGanancia.innerText = render(gananciaCOP);
     els.resTotalCobrar.innerText = render(totalCobrarCOP);
@@ -1377,7 +1377,7 @@ function showSaveToast(msg) {
         toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--success,#43a047);color:#fff;padding:8px 18px;border-radius:8px;font-size:0.9rem;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
         document.body.appendChild(toast);
     }
-    toast.innerText = msg || '✓ Guardado';
+    toast.innerHTML = msg || '<i class="bi bi-check-circle"></i> Guardado';
     toast.style.opacity = '1';
     clearTimeout(toast._t);
     toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
@@ -1402,10 +1402,10 @@ async function saveAllData() {
             // Fallback web app: guardar todo en localStorage
             localStorage.setItem('calculadora3d_alldata', payload);
         }
-        showSaveToast('✓ Guardado');
+        showSaveToast('<i class="bi bi-check-circle"></i> Guardado');
     } catch(e) {
         console.error('Error al guardar:', e);
-        showSaveToast('⚠ Error al guardar');
+        showSaveToast('<i class="bi bi-exclamation-triangle"></i> Error al guardar');
     }
 }
 
@@ -2136,7 +2136,7 @@ function autoSaveCurrentState() {
             const title = nota ? esc(nota) : 'Ver detalles de la pieza';
             return `<div class="${cls.join(' ')}" role="option" data-name="${esc(name)}" aria-selected="${name === state.currentPiece}">
                         <span class="piece-combo-option-name">${highlight(name)}</span>
-                        <button type="button" class="${infoCls}" data-info="${esc(name)}" title="${title}" tabindex="-1">i</button>
+                        <button type="button" class="${infoCls}" data-info="${esc(name)}" title="${title}" tabindex="-1"><i class="bi bi-info-circle"></i></button>
                     </div>` + (openInfo === name ? detailsHTML(name) : '');
         }).join('');
 

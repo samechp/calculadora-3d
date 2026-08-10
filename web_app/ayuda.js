@@ -278,7 +278,7 @@ function nuevoBoton(texto) {
     b.tabIndex = -1;
     b.setAttribute('aria-label', 'Qué es esto');
     b.setAttribute('data-help', texto);
-    b.textContent = 'i';
+    b.innerHTML = '<i class="bi bi-info-circle"></i>';
     return b;
 }
 

@@ -1,0 +1,6 @@
+# La fuente de iconos y el icono de la app son binarios: git no debe tocarles
+# los saltos de línea o llegarían corruptos a quien actualice.
+*.woff2 binary
+*.woff  binary
+*.ico   binary
+*.exe   binary

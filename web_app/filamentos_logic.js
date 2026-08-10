@@ -51,7 +51,7 @@ function initFilamentos() {
                     <strong>${f.marca} ${f.tipo}</strong> - ${f.color} 
                     <br><small style="color:var(--text-muted);">$${f.precio} ${f.moneda}/kg</small>
                 </div>
-                <button class="btn-remove-filamento" data-id="${f.id}" style="background:none; border:none; color:var(--danger); cursor:pointer;">✕</button>
+                <button class="btn-remove-filamento" data-id="${f.id}" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="bi bi-x-lg"></i></button>
             `;
             els.filamentosList.appendChild(item);
         });
@@ -82,11 +82,11 @@ function initFilamentos() {
         });
         if (window.pywebview) {
             window.pywebview.api.save_profiles(payload).then(() => {
-                if (typeof window.showSaveToast === 'function') window.showSaveToast('✓ Filamento guardado');
+                if (typeof window.showSaveToast === 'function') window.showSaveToast('<i class="bi bi-check-circle"></i> Filamento guardado');
             }).catch(e => console.error('Error guardando filamento:', e));
         } else {
             localStorage.setItem('calculadora3d_alldata', payload);
-            if (typeof window.showSaveToast === 'function') window.showSaveToast('✓ Filamento guardado');
+            if (typeof window.showSaveToast === 'function') window.showSaveToast('<i class="bi bi-check-circle"></i> Filamento guardado');
         }
     }
 
@@ -148,7 +148,7 @@ function initFilamentos() {
             row.innerHTML = `
                 <select class="fil-extra-select" style="flex: 2; min-width: 150px;"></select>
                 <input type="number" class="fil-extra-gramos" min="0" step="1" placeholder="Gramos" style="flex: 1; min-width: 80px;">
-                <button class="btn-remove-extra-row" style="background:none; border:none; color:var(--danger); cursor:pointer;">✕</button>
+                <button class="btn-remove-extra-row" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="bi bi-x-lg"></i></button>
             `;
             els.filamentosExtraContainer.appendChild(row);
             
@@ -190,7 +190,7 @@ function initFilamentos() {
         row.innerHTML = `
             <select class="fil-extra-select" style="flex: 2; min-width: 150px;"></select>
             <input type="number" class="fil-extra-gramos" min="0" step="1" placeholder="Gramos" style="flex: 1; min-width: 80px;">
-            <button class="btn-remove-extra-row" style="background:none; border:none; color:var(--danger); cursor:pointer;">✕</button>
+            <button class="btn-remove-extra-row" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="bi bi-x-lg"></i></button>
         `;
         els.filamentosExtraContainer.appendChild(row);
         row.querySelector('.btn-remove-extra-row').addEventListener('click', () => {

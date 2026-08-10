@@ -36,6 +36,8 @@ DESKTOP_PY = os.path.join(RAIZ, 'scripts', 'calculadora_desktop.py')
 ARCHIVOS_WEB = [
     'index.html',
     'style.css',
+    'bootstrap-icons.css',
+    'bootstrap-icons.woff2',
     'app.js',
     'ayuda.js',
     'actualizacion.js',
@@ -138,7 +140,7 @@ def sincronizar_archivos(app, web, notas):
     with open(os.path.join(CLON, 'version.json'), 'w', encoding='utf-8') as f:
         json.dump(version, f, ensure_ascii=False, indent=2)
 
-    for nombre in ('README.md', '.gitignore'):
+    for nombre in ('README.md', '.gitignore', '.gitattributes'):
         origen = os.path.join(RAIZ, 'plantillas_repo', nombre)
         if os.path.exists(origen):
             shutil.copy2(origen, os.path.join(CLON, nombre))

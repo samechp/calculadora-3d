@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora 3D</title>
+    <link rel="stylesheet" href="bootstrap-icons.css">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -18,7 +19,7 @@
             <section class="card ajustes-card">
                 <div class="card-header collapsible-header" id="ajustesHeader" onclick="toggleAjustes()">
                     <h2>1. Ajustes Fijos</h2>
-                    <span class="collapse-arrow" id="ajustesArrow">▼</span>
+                    <span class="collapse-arrow" id="ajustesArrow"><i class="bi bi-chevron-down"></i></span>
                 </div>
                 <div id="ajustesBody">
                 
@@ -83,7 +84,7 @@
                                 </div>
                             </div>
                         </div>
-                        <button type="button" id="btnSaveFilamento" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">+ Guardar Filamento</button>
+                        <button type="button" id="btnSaveFilamento" class="btn btn-outline" style="margin-top: 1rem; width: 100%;"><i class="bi bi-plus-lg"></i> Guardar Filamento</button>
                         <div id="filamentosList" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto;">
                             <!-- Items dinámicos -->
                         </div>
@@ -142,10 +143,10 @@
                 </div>
                 <!-- NAV TABS -->
                 <div class="piece-tabs-nav" id="pieceTabs">
-                    <button class="piece-tab-btn active" data-tab="tabPrincipal">⚙️ Principal</button>
-                    <button class="piece-tab-btn" data-tab="tabPartes">🧩 Partes Extra<span class="tab-badge" id="badgePartes" style="display:none">0</span></button>
-                    <button class="piece-tab-btn" data-tab="tabInsumos">📦 Insumos<span class="tab-badge" id="badgeInsumos" style="display:none">0</span></button>
-                    <button class="piece-tab-btn" data-tab="tabConfig">🖨️ Config</button>
+                    <button class="piece-tab-btn active" data-tab="tabPrincipal"><i class="bi bi-gear"></i> Principal</button>
+                    <button class="piece-tab-btn" data-tab="tabPartes"><i class="bi bi-puzzle"></i> Partes Extra<span class="tab-badge" id="badgePartes" style="display:none">0</span></button>
+                    <button class="piece-tab-btn" data-tab="tabInsumos"><i class="bi bi-box-seam"></i> Insumos<span class="tab-badge" id="badgeInsumos" style="display:none">0</span></button>
+                    <button class="piece-tab-btn" data-tab="tabConfig"><i class="bi bi-printer"></i> Config</button>
                 </div>
                 <!-- TAB: PRINCIPAL -->
                 <div class="piece-tab-content active" id="tabPrincipal">
@@ -179,7 +180,7 @@
 
                     <div id="variosFilamentosSection" style="display: none; grid-column: 1 / -1; padding-left: 1rem; border-left: 2px solid var(--border);">
                         <div id="filamentosExtraContainer"></div>
-                        <button type="button" id="btnAñadirFilamentoExtra" class="btn btn-outline" style="margin-top: 0.5rem; font-size: 0.8rem; padding: 0.35rem 0.75rem;">+ Añadir Filamento Extra</button>
+                        <button type="button" id="btnAñadirFilamentoExtra" class="btn btn-outline" style="margin-top: 0.5rem; font-size: 0.8rem; padding: 0.35rem 0.75rem;"><i class="bi bi-plus-lg"></i> Añadir Filamento Extra</button>
                     </div>
 
                     <div class="input-group">
@@ -212,8 +213,8 @@
                 <div class="piece-tab-content" id="tabPartes">
                 <div class="partes-extra-section">
                     <div class="tab-section-header">
-                        <span>🧩 Partes Extra (Diferente Cama)</span>
-                        <button type="button" id="btnAddParte" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">+ Agregar Parte</button>
+                        <span><i class="bi bi-puzzle"></i> Partes Extra (Diferente Cama)</span>
+                        <button type="button" id="btnAddParte" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;"><i class="bi bi-plus-lg"></i> Agregar Parte</button>
                     </div>
                     <p class="section-hint" style="margin-bottom:1rem;">Cada parte se imprime en una cama diferente. El tiempo de operario y prep. máquina se multiplica automáticamente.</p>
                     <div id="partesExtraContainer"></div>
@@ -224,8 +225,8 @@
                 <div class="piece-tab-content" id="tabInsumos">
                 <div class="insumos-extra-section">
                     <div class="tab-section-header">
-                        <span>📦 Insumos Extra</span>
-                        <button type="button" id="btnAddInsumoPieza" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">+ Agregar insumo</button>
+                        <span><i class="bi bi-box-seam"></i> Insumos Extra</span>
+                        <button type="button" id="btnAddInsumoPieza" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;"><i class="bi bi-plus-lg"></i> Agregar insumo</button>
                     </div>
                     <div id="insumosExtraContainerPieza"></div>
                     <!-- Resumen de insumos -->
@@ -254,7 +255,7 @@
                 <div class="print-config-section">
                     <div class="print-config-toggle" id="printConfigToggle">
                         <div class="print-config-toggle-left">
-                            <span class="print-config-arrow" id="printConfigArrow">▶</span>
+                            <span class="print-config-arrow" id="printConfigArrow"><i class="bi bi-chevron-right"></i></span>
                             <span class="print-config-title">Configuración de Impresión</span>
                         </div>
                         <span class="badge-optional">Opcional</span>
@@ -264,8 +265,8 @@
                         <!-- Sub-sección: Calidad -->
                         <div class="print-subsection">
                             <div class="print-subsection-header" data-target="subsCalidad">
-                                <span class="print-subsection-arrow">▶</span>
-                                <span>🎯 Calidad</span>
+                                <span class="print-subsection-arrow"><i class="bi bi-chevron-right"></i></span>
+                                <span><i class="bi bi-bullseye"></i> Calidad</span>
                             </div>
                             <div class="print-subsection-body" id="subsCalidad" style="display: none;">
                                 <div class="input-grid">
@@ -302,8 +303,8 @@
                         <!-- Sub-sección: Fuerza -->
                         <div class="print-subsection">
                             <div class="print-subsection-header" data-target="subsFuerza">
-                                <span class="print-subsection-arrow">▶</span>
-                                <span>💪 Fuerza</span>
+                                <span class="print-subsection-arrow"><i class="bi bi-chevron-right"></i></span>
+                                <span><i class="bi bi-shield-check"></i> Fuerza</span>
                             </div>
                             <div class="print-subsection-body" id="subsFuerza" style="display: none;">
                                 <div class="input-grid">
@@ -368,8 +369,8 @@
                         <!-- Sub-sección: Velocidad -->
                         <div class="print-subsection">
                             <div class="print-subsection-header" data-target="subsVelocidad">
-                                <span class="print-subsection-arrow">▶</span>
-                                <span>⚡ Velocidad</span>
+                                <span class="print-subsection-arrow"><i class="bi bi-chevron-right"></i></span>
+                                <span><i class="bi bi-lightning-charge"></i> Velocidad</span>
                             </div>
                             <div class="print-subsection-body" id="subsVelocidad" style="display: none;">
                                 <div class="input-grid" style="grid-template-columns: 1fr;">
@@ -388,8 +389,8 @@
                         <!-- Sub-sección: Soportes -->
                         <div class="print-subsection">
                             <div class="print-subsection-header" data-target="subsSoportes">
-                                <span class="print-subsection-arrow">▶</span>
-                                <span>🏗️ Soportes</span>
+                                <span class="print-subsection-arrow"><i class="bi bi-chevron-right"></i></span>
+                                <span><i class="bi bi-columns-gap"></i> Soportes</span>
                             </div>
                             <div class="print-subsection-body" id="subsSoportes" style="display: none;">
                                 <div class="input-grid">
@@ -432,7 +433,7 @@
                 <div class="print-config-section">
                     <div class="print-config-toggle" id="topLayerConfigToggle">
                         <div class="print-config-toggle-left">
-                            <span class="print-config-arrow" id="topLayerConfigArrow">▶</span>
+                            <span class="print-config-arrow" id="topLayerConfigArrow"><i class="bi bi-chevron-right"></i></span>
                             <span class="print-config-title">Configuración Capas Distintas</span>
                         </div>
                         <span class="badge-optional">Opcional</span>
@@ -442,8 +443,8 @@
                         <!-- Sub-sección: Calidad -->
                         <div class="print-subsection">
                             <div class="print-subsection-header" data-target="subsCapasCalidad">
-                                <span class="print-subsection-arrow">▶</span>
-                                <span>🎯 Calidad</span>
+                                <span class="print-subsection-arrow"><i class="bi bi-chevron-right"></i></span>
+                                <span><i class="bi bi-bullseye"></i> Calidad</span>
                             </div>
                             <div class="print-subsection-body" id="subsCapasCalidad" style="display: none;">
                                 <div class="input-grid">
@@ -476,8 +477,8 @@
                         <!-- Sub-sección: Fuerza -->
                         <div class="print-subsection">
                             <div class="print-subsection-header" data-target="subsCapasFuerza">
-                                <span class="print-subsection-arrow">▶</span>
-                                <span>💪 Fuerza</span>
+                                <span class="print-subsection-arrow"><i class="bi bi-chevron-right"></i></span>
+                                <span><i class="bi bi-shield-check"></i> Fuerza</span>
                             </div>
                             <div class="print-subsection-body" id="subsCapasFuerza" style="display: none;">
                                 <div class="input-grid">
@@ -542,8 +543,8 @@
                         <!-- Sub-sección: Velocidad -->
                         <div class="print-subsection">
                             <div class="print-subsection-header" data-target="subsCapasVelocidad">
-                                <span class="print-subsection-arrow">▶</span>
-                                <span>⚡ Velocidad</span>
+                                <span class="print-subsection-arrow"><i class="bi bi-chevron-right"></i></span>
+                                <span><i class="bi bi-lightning-charge"></i> Velocidad</span>
                             </div>
                             <div class="print-subsection-body" id="subsCapasVelocidad" style="display: none;">
                                 <div class="input-grid" style="grid-template-columns: 1fr;">
@@ -569,7 +570,7 @@
                 <div style="margin-top: 1rem; padding: 1rem; border: 1px dashed var(--border); border-radius: 0.5rem; background: rgba(138,180,248,0.04);">
                     <div class="input-group" style="margin-bottom: 0;">
                         <label for="precioVentaPieza" style="display: flex; align-items: center; gap: 0.5rem;">
-                            🏷️ Precio de Venta (c/u)
+                            <i class="bi bi-tag"></i> Precio de Venta (c/u)
                             <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">(Opcional — sobreescribe el "Total a Cobrar")</span>
                         </label>
                         <input type="number" id="precioVentaPieza" min="0" step="0.01" placeholder="Dejar vacío = usar precio calculado">
@@ -604,8 +605,8 @@
                                    aria-expanded="false" aria-autocomplete="list" aria-controls="pieceComboList"
                                    autocomplete="off" placeholder="-- Cargar Pieza Guardada --">
                             <span id="pieceSearchCount" class="piece-combo-count"></span>
-                            <button type="button" id="pieceComboClear" class="piece-combo-btn" title="Limpiar selección" tabindex="-1">×</button>
-                            <button type="button" id="pieceComboArrow" class="piece-combo-btn piece-combo-arrow" title="Ver piezas" tabindex="-1">▼</button>
+                            <button type="button" id="pieceComboClear" class="piece-combo-btn" title="Limpiar selección" tabindex="-1"><i class="bi bi-x-lg"></i></button>
+                            <button type="button" id="pieceComboArrow" class="piece-combo-btn piece-combo-arrow" title="Ver piezas" tabindex="-1"><i class="bi bi-chevron-down"></i></button>
                         </div>
                         <div class="piece-combo-list" id="pieceComboList" role="listbox" hidden></div>
                     </div>
@@ -795,7 +796,7 @@
                             <span class="val" id="resGramosTotales">—</span>
                         </div>
                         <div class="result-item" id="containerBobinas">
-                            <span>🧵 Bobinas necesarias (1 kg):</span>
+                            <span><i class="bi bi-disc"></i> Bobinas necesarias (1 kg):</span>
                             <span class="val" id="resBobinas">—</span>
                         </div>
                         <hr>
