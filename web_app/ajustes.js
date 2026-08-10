@@ -276,16 +276,42 @@ function pintarEmpresa(cuerpo) {
     // El logo también se queda en el borrador hasta guardar
     const btnLogo = cuerpo.querySelector('#ajSubirLogo');
     const archivo = cuerpo.querySelector('#ajArchivoLogo');
-    if (btnLogo && archivo) {
-        btnLogo.addEventListener('click', () => archivo.click());
+    if (btnLogo) {
+        btnLogo.addEventListener('click', async () => {
+            const a = api();
+            if (a && a.elegir_logo) {
+                // Dentro de la aplicación se abre el diálogo de Windows: el
+                // selector de archivos del HTML no llega a abrirse en su motor.
+                btnLogo.disabled = true;
+                let datos = '';
+                try { datos = await a.elegir_logo(); } catch (e) { datos = ''; }
+                btnLogo.disabled = false;
+                if (!datos) return;
+                if (datos.indexOf('ERROR:') === 0) {
+                    avisar('No se pudo abrir la imagen. ' + datos.slice(6), 'Error con el logo');
+                    return;
+                }
+                reducirDataUrl(datos, (peque) => {
+                    borrador.logo = peque || datos;
+                    pintarEmpresa(cuerpo);
+                });
+                return;
+            }
+            if (archivo) archivo.click();      // versión web en navegador
+        });
+    }
+    if (archivo) {
         archivo.addEventListener('change', () => {
             const f = archivo.files && archivo.files[0];
             if (!f) return;
-            reducirImagen(f, (dataUrl) => {
-                if (!dataUrl) { avisar('No se pudo leer la imagen.'); return; }
-                borrador.logo = dataUrl;
+            const lector = new FileReader();
+            lector.onload = () => reducirDataUrl(lector.result, (peque) => {
+                if (!peque) { avisar('No se pudo leer la imagen.'); return; }
+                borrador.logo = peque;
                 pintarEmpresa(cuerpo);
             });
+            lector.onerror = () => avisar('No se pudo leer la imagen.');
+            lector.readAsDataURL(f);
         });
     }
     const quitar = cuerpo.querySelector('#ajQuitarLogo');
@@ -293,6 +319,23 @@ function pintarEmpresa(cuerpo) {
         delete borrador.logo;
         pintarEmpresa(cuerpo);
     });
+}
+
+// Reduce el logo a 400 px de ancho como máximo, para que el archivo de datos
+// no se llene con una imagen enorme.
+function reducirDataUrl(dataUrl, listo) {
+    const img = new Image();
+    img.onload = () => {
+        const maxAncho = 400;
+        const escala = Math.min(1, maxAncho / img.width);
+        const lienzo = document.createElement('canvas');
+        lienzo.width = Math.round(img.width * escala);
+        lienzo.height = Math.round(img.height * escala);
+        lienzo.getContext('2d').drawImage(img, 0, 0, lienzo.width, lienzo.height);
+        try { listo(lienzo.toDataURL('image/png')); } catch (e) { listo(null); }
+    };
+    img.onerror = () => listo(null);
+    img.src = dataUrl;
 }
 
 // --- Tema claro / oscuro ---

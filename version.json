@@ -1,6 +1,6 @@
 {
-  "app_version": "1.0.3",
-  "web_version": "1.0.7",
+  "app_version": "1.0.4",
+  "web_version": "1.0.8",
   "web_files": [
     "index.html",
     "style.css",
@@ -17,5 +17,5 @@
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Crear empresa en un solo formulario con botones Guardar y Cancelar"
+  "notas": "El logo de la empresa se elige con el dialogo de Windows"
 }

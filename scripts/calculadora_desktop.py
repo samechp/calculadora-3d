@@ -159,8 +159,8 @@ def save_window_state(st):
 #     plano y queda lista para el siguiente arranque.
 #   - El EJECUTABLE (esta parte en Python): son ~34 MB. Solo se avisa; el usuario
 #     decide con un botón y la app se reinicia sola.
-APP_VERSION = '1.0.3'   # versión del .exe
-WEB_VERSION = '1.0.7'   # versión de la interfaz que viene dentro del .exe
+APP_VERSION = '1.0.4'   # versión del .exe
+WEB_VERSION = '1.0.8'   # versión de la interfaz que viene dentro del .exe
 
 REPO = 'samechp/calculadora-3d'
 VERSION_URL = 'https://raw.githubusercontent.com/{}/main/version.json'.format(REPO)
@@ -596,6 +596,30 @@ class Api:
         except Exception as e:
             print("Error restaurando la copia:", e)
             return False
+
+    def elegir_logo(self):
+        """Abre el diálogo de Windows y devuelve la imagen lista para usar en la
+        interfaz. El <input type="file"> del HTML no funciona dentro del motor de
+        la aplicación, así que se hace por aquí."""
+        try:
+            file_types = ('Imágenes (*.png;*.jpg;*.jpeg;*.bmp)',)
+            result = webview.windows[0].create_file_dialog(webview.OPEN_DIALOG, file_types=file_types)
+            if not result:
+                return ''
+            ruta = result[0]
+            if os.path.getsize(ruta) > 12 * 1024 * 1024:
+                return 'ERROR:demasiado grande'
+
+            import base64
+            extension = os.path.splitext(ruta)[1].lower()
+            tipo = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+                    '.bmp': 'image/bmp'}.get(extension, 'image/png')
+            with open(ruta, 'rb') as f:
+                datos = f.read()
+            return 'data:{};base64,{}'.format(tipo, base64.b64encode(datos).decode('ascii'))
+        except Exception as e:
+            print("Error eligiendo el logo:", e)
+            return 'ERROR:' + str(e)
 
     def export_profiles_file(self, data):
         try:
