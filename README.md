@@ -37,6 +37,22 @@ No hay que volver a descargar nada cuando hay cambios:
 
 Si no hay internet, la app funciona igual: solo se salta la revisión.
 
+### Tú mandas sobre las versiones
+
+En la barra de aviso puedes elegir:
+
+- **Actualizar ahora** — descarga y reinicia.
+- **Omitir esta versión** — no se vuelve a avisar de esa versión en concreto (sí de las siguientes).
+- **✕** — cerrar; vuelve a avisar la próxima vez que abras.
+
+Y si una versión no te convenció, abajo del todo hay un enlace con el número de
+versión (ej. `v1.0.2`). Ahí sale la lista de todas las versiones publicadas y
+puedes **instalar cualquier anterior**. Al hacerlo la app se queda fija en esa
+versión y deja de actualizarse sola, hasta que pulses **Reactivar
+actualizaciones** en esa misma ventana.
+
+Las decisiones se guardan en `actualizaciones.json`, al lado del programa.
+
 ## Cómo funciona el cálculo
 
 - **Costo de producción** = material + luz + desgaste + margen de error + insumos + mano de obra.

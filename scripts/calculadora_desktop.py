@@ -100,8 +100,8 @@ def save_window_state(st):
 #     plano y queda lista para el siguiente arranque.
 #   - El EJECUTABLE (esta parte en Python): son ~34 MB. Solo se avisa; el usuario
 #     decide con un botón y la app se reinicia sola.
-APP_VERSION = '1.0.1'   # versión del .exe
-WEB_VERSION = '1.0.1'   # versión de la interfaz que viene dentro del .exe
+APP_VERSION = '1.0.2'   # versión del .exe
+WEB_VERSION = '1.0.2'   # versión de la interfaz que viene dentro del .exe
 
 REPO = 'samechp/calculadora-3d'
 VERSION_URL = 'https://raw.githubusercontent.com/{}/main/version.json'.format(REPO)
@@ -109,12 +109,43 @@ WEB_BASE_URL = 'https://raw.githubusercontent.com/{}/main/web_app/'.format(REPO)
 EXE_URL = 'https://github.com/{}/releases/latest/download/Calculadora3D.exe'.format(REPO)
 RELEASES_URL = 'https://github.com/{}/releases/latest'.format(REPO)
 
+RELEASES_API = 'https://api.github.com/repos/{}/releases'.format(REPO)
+
+def url_exe_de_version(version):
+    return 'https://github.com/{}/releases/download/v{}/Calculadora3D.exe'.format(REPO, version)
+
 WEB_UPDATE_DIR = os.path.join(get_base_path(), 'web_update')
 WEB_UPDATE_VERSION_FILE = os.path.join(WEB_UPDATE_DIR, 'version.txt')
+PREFS_FILE = os.path.join(get_base_path(), 'actualizaciones.json')
 
 # Estado compartido con la interfaz mientras se baja el ejecutable
 _estado_update = {'estado': 'inactivo', 'porcentaje': 0, 'mensaje': ''}
 _info_remota = {}
+
+
+def cargar_prefs():
+    """omitidas: versiones que el usuario no quiere que le vuelvan a ofrecer.
+    fijada: si el usuario se quedó a propósito en una versión vieja, no se
+    actualiza nada (ni interfaz ni ejecutable) hasta que él lo reactive."""
+    prefs = {'omitidas': [], 'fijada': None}
+    try:
+        if os.path.exists(PREFS_FILE):
+            with open(PREFS_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                prefs['omitidas'] = [str(v) for v in data.get('omitidas', [])]
+                prefs['fijada'] = data.get('fijada') or None
+    except Exception as e:
+        print("Error leyendo preferencias de actualización:", e)
+    return prefs
+
+
+def guardar_prefs(prefs):
+    try:
+        with open(PREFS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(prefs, f, ensure_ascii=False)
+    except Exception as e:
+        print("Error guardando preferencias de actualización:", e)
 
 
 def _numero_version(v):
@@ -191,14 +222,16 @@ def _descargar_interfaz(info):
         shutil.rmtree(temp, ignore_errors=True)
 
 
-def _descargar_exe():
-    """Baja el ejecutable nuevo al lado del actual, informando el avance."""
+def _descargar_exe(url=None):
+    """Baja el ejecutable indicado (por defecto el más reciente) al lado del
+    actual, informando el avance."""
     global _estado_update
+    url = url or EXE_URL
     destino = os.path.join(get_base_path(), 'Calculadora3D.nuevo.exe')
     parcial = destino + '.part'
     try:
         _estado_update = {'estado': 'descargando', 'porcentaje': 0, 'mensaje': ''}
-        req = urllib.request.Request(EXE_URL, headers={'User-Agent': 'Calculadora3D/' + APP_VERSION})
+        req = urllib.request.Request(url, headers={'User-Agent': 'Calculadora3D/' + APP_VERSION})
         with urllib.request.urlopen(req, timeout=30) as r:
             total = int(r.headers.get('Content-Length') or 0)
             bajado = 0
@@ -286,6 +319,13 @@ def revisar_actualizaciones(window):
         return
 
     _info_remota = info
+    prefs = cargar_prefs()
+
+    # El usuario eligió quedarse en una versión concreta: no se toca nada
+    if prefs.get('fijada'):
+        print("Actualizaciones en pausa: el usuario fijó la versión", prefs['fijada'])
+        return
+
     aviso = None
 
     # 1) Interfaz: se baja sola, se aplica al reiniciar
@@ -302,10 +342,13 @@ def revisar_actualizaciones(window):
 
     # 2) Ejecutable: solo se avisa, el usuario decide
     try:
-        if getattr(sys, 'frozen', False) and es_mas_nueva(info.get('app_version', '0'), APP_VERSION):
+        nueva_app = info.get('app_version', '0')
+        if (getattr(sys, 'frozen', False)
+                and es_mas_nueva(nueva_app, APP_VERSION)
+                and str(nueva_app) not in prefs.get('omitidas', [])):
             aviso = {
                 'tipo': 'exe',
-                'version': info.get('app_version'),
+                'version': nueva_app,
                 'notas': info.get('notas', ''),
                 'actual': APP_VERSION
             }
@@ -322,16 +365,94 @@ def revisar_actualizaciones(window):
 class Api:
     # ---- Actualizaciones (lo llama la interfaz) ----
     def info_version(self):
+        prefs = cargar_prefs()
         return json.dumps({
             'app': APP_VERSION,
             'web': version_web_actual(),
-            'repo': RELEASES_URL
+            'repo': RELEASES_URL,
+            'fijada': prefs.get('fijada'),
+            'omitidas': prefs.get('omitidas', []),
+            'empaquetada': bool(getattr(sys, 'frozen', False))
         })
+
+    def listar_versiones(self):
+        """Todas las versiones publicadas, para poder volver a una anterior."""
+        try:
+            datos = json.loads(_bajar(RELEASES_API + '?per_page=30', timeout=15).decode('utf-8'))
+        except Exception as e:
+            print("No se pudo consultar el listado de versiones:", e)
+            return json.dumps({'error': 'No se pudo conectar con GitHub.'})
+
+        prefs = cargar_prefs()
+        lista = []
+        for r in datos:
+            if r.get('draft'):
+                continue
+            version = str(r.get('tag_name', '')).lstrip('vV')
+            tiene_exe = any(a.get('name') == 'Calculadora3D.exe' for a in r.get('assets', []))
+            if not version or not tiene_exe:
+                continue
+            lista.append({
+                'version': version,
+                'notas': (r.get('body') or '').split('\n\n')[0].strip(),
+                'fecha': (r.get('published_at') or '')[:10],
+                'instalada': version == APP_VERSION,
+            })
+        return json.dumps({
+            'versiones': lista,
+            'actual': APP_VERSION,
+            'fijada': prefs.get('fijada'),
+        })
+
+    def omitir_version(self, version):
+        prefs = cargar_prefs()
+        version = str(version)
+        if version not in prefs['omitidas']:
+            prefs['omitidas'].append(version)
+        guardar_prefs(prefs)
+        return True
+
+    def reactivar_actualizaciones(self):
+        prefs = cargar_prefs()
+        prefs['fijada'] = None
+        prefs['omitidas'] = []
+        guardar_prefs(prefs)
+        return True
+
+    def instalar_version(self, version):
+        """Instala una versión concreta (normalmente una anterior). Deja la app
+        fijada ahí para que el actualizador no la vuelva a mover sin permiso."""
+        if _estado_update.get('estado') == 'descargando':
+            return True
+        version = str(version).lstrip('vV')
+
+        def trabajo():
+            _descargar_exe(url_exe_de_version(version))
+            if _estado_update.get('estado') != 'listo':
+                return
+            prefs = cargar_prefs()
+            prefs['fijada'] = version
+            guardar_prefs(prefs)
+            # La interfaz descargada puede ser más nueva que la de este .exe:
+            # se borra para que quede exactamente la versión elegida.
+            shutil.rmtree(WEB_UPDATE_DIR, ignore_errors=True)
+
+        threading.Thread(target=trabajo, daemon=True).start()
+        return True
 
     def iniciar_actualizacion_exe(self):
         if _estado_update.get('estado') == 'descargando':
             return True
-        threading.Thread(target=_descargar_exe, daemon=True).start()
+
+        def trabajo():
+            _descargar_exe()
+            if _estado_update.get('estado') == 'listo':
+                # Actualizar a propósito reactiva el seguimiento normal
+                prefs = cargar_prefs()
+                prefs['fijada'] = None
+                guardar_prefs(prefs)
+
+        threading.Thread(target=trabajo, daemon=True).start()
         return True
 
     def estado_actualizacion(self):

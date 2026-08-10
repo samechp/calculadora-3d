@@ -38,6 +38,7 @@ ARCHIVOS_WEB = [
     'style.css',
     'bootstrap-icons.css',
     'bootstrap-icons.woff2',
+    'printoverse-logo.png',
     'app.js',
     'ayuda.js',
     'actualizacion.js',
@@ -49,6 +50,7 @@ ARCHIVOS_WEB = [
 ARCHIVOS_FUENTE = [
     ('scripts/calculadora_desktop.py', 'scripts/calculadora_desktop.py'),
     ('scripts/icono.ico', 'scripts/icono.ico'),
+    ('scripts/printoverse.ico', 'scripts/printoverse.ico'),
     ('build_exe.py', 'build_exe.py'),
     ('Calculadora3D.spec', 'Calculadora3D.spec'),
     ('publicar.py', 'publicar.py'),

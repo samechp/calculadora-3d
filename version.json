@@ -1,16 +1,17 @@
 {
-  "app_version": "1.0.1",
-  "web_version": "1.0.1",
+  "app_version": "1.0.2",
+  "web_version": "1.0.2",
   "web_files": [
     "index.html",
     "style.css",
     "bootstrap-icons.css",
     "bootstrap-icons.woff2",
+    "printoverse-logo.png",
     "app.js",
     "ayuda.js",
     "actualizacion.js",
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Iconos de Bootstrap en toda la app en vez de emojis"
+  "notas": "Logo de PrintoVerse, opcion de omitir version y de volver a una version anterior"
 }

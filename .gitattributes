@@ -4,3 +4,5 @@
 *.woff  binary
 *.ico   binary
 *.exe   binary
+*.png   binary
+*.webp  binary
