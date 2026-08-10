@@ -1178,8 +1178,8 @@ els.btnSavePiece.addEventListener('click', () => {
     }
 });
 
-els.btnDeletePiece.addEventListener('click', () => {
-    if (state.currentPiece && confirm(`¿Eliminar pieza "${state.currentPiece}"?`)) {
+els.btnDeletePiece.addEventListener('click', async () => {
+    if (state.currentPiece && await confirmar(`Se va a eliminar la pieza "${state.currentPiece}". Esta acción no se puede deshacer.`, {titulo: 'Eliminar pieza', aceptar: 'Eliminar', peligro: true})) {
         const delPiece = state.currentPiece; delete state.pieces[state.currentPiece];
         state.currentPiece = null;
         savePieces();
@@ -1253,7 +1253,7 @@ els.projectSelect.addEventListener('change', (e) => {
 
 els.btnSaveProject.addEventListener('click', () => {
     if (!state._lastProjectCalc) {
-        alert('Primero completa las unidades necesitadas y unidades por cama para ver resultados del proyecto.');
+        avisar('Primero completa las unidades necesitadas y unidades por cama para ver resultados del proyecto.');
         return;
     }
     if (state.currentProject) {
@@ -1265,8 +1265,8 @@ els.btnSaveProject.addEventListener('click', () => {
     }
 });
 
-els.btnDeleteProject.addEventListener('click', () => {
-    if (state.currentProject && confirm(`¿Eliminar proyecto "${state.currentProject}"?`)) {
+els.btnDeleteProject.addEventListener('click', async () => {
+    if (state.currentProject && await confirmar(`Se va a eliminar el proyecto "${state.currentProject}".`, {titulo: 'Eliminar proyecto', aceptar: 'Eliminar', peligro: true})) {
         const delProj = state.currentProject; delete state.projects[state.currentProject];
         state.currentProject = null;
         saveProjects();
@@ -1382,7 +1382,7 @@ function calculateMegaProject() {
 
 els.btnAddSubProject.addEventListener('click', () => {
     const name = els.subProjectSelect.value;
-    if (!name || !state.projects[name]) { alert("Selecciona un proyecto válido de la lista."); return; }
+    if (!name || !state.projects[name]) { avisar("Selecciona un proyecto válido de la lista."); return; }
     const cloned = JSON.parse(JSON.stringify(state.projects[name]));
     cloned._nombre = name;
     state.megaProjectItems.push(cloned);
@@ -1414,13 +1414,13 @@ els.megaProjectSelect.addEventListener('change', (e) => {
 });
 
 els.btnSaveMegaProject.addEventListener('click', () => {
-    if (state.megaProjectItems.length === 0) { alert("Agrega al menos un proyecto al Mega Proyecto."); return; }
+    if (state.megaProjectItems.length === 0) { avisar("Agrega al menos un proyecto al Mega Proyecto."); return; }
     if (state.currentMegaProject) { state.megaProjects[state.currentMegaProject] = getMegaProjectData(); saveMegaProjects(); }
     else { els.megaProjectNameInput.value = ''; els.megaProjectModal.classList.add('active'); }
 });
 
-els.btnDeleteMegaProject.addEventListener('click', () => {
-    if (state.currentMegaProject && confirm(`¿Eliminar Mega Proyecto "${state.currentMegaProject}"?`)) {
+els.btnDeleteMegaProject.addEventListener('click', async () => {
+    if (state.currentMegaProject && await confirmar(`Se va a eliminar el mega proyecto "${state.currentMegaProject}".`, {titulo: 'Eliminar mega proyecto', aceptar: 'Eliminar', peligro: true})) {
         const delMega = state.currentMegaProject; delete state.megaProjects[state.currentMegaProject];
         state.currentMegaProject = null;
         state.megaProjectItems = [];
@@ -1454,9 +1454,10 @@ function showSaveToast(msg) {
 window.showSaveToast = showSaveToast;
 
 
-async function saveAllData() {
-    // Nunca guardar durante la carga inicial (evita sobreescribir con estado vacío)
-    if (!state._appReady) return;
+async function saveAllData(forzar) {
+    // Nunca guardar durante la carga inicial (evita sobreescribir con estado vacío).
+    // "forzar" es para acciones explícitas del usuario, como guardar un filamento.
+    if (!state._appReady && !forzar) return;
     try {
         const payload = JSON.stringify({
             profiles: state.profiles,
@@ -1697,7 +1698,7 @@ els.btnExportProfiles.addEventListener('click', async () => {
             dlAnchorElem.click();
         }
     } else {
-        alert("No hay perfiles para exportar.");
+        avisar("No hay perfiles para exportar.");
     }
 });
 
@@ -1709,8 +1710,8 @@ els.btnImportProfiles.addEventListener('click', async () => {
                 const newData = JSON.parse(imported);
                 state.profiles = { ...state.profiles, ...newData };
                 saveProfiles();
-                alert("Perfiles importados con éxito.");
-            } catch(e) { alert("El archivo no es válido."); }
+                avisar("Perfiles importados con éxito.");
+            } catch(e) { avisar("El archivo no es válido."); }
         }
     } else {
         const input = document.createElement('input');
@@ -1724,8 +1725,8 @@ els.btnImportProfiles.addEventListener('click', async () => {
                     const newData = JSON.parse(event.target.result);
                     state.profiles = { ...state.profiles, ...newData };
                     saveProfiles();
-                    alert("Perfiles importados con éxito.");
-                } catch(e) { alert("El archivo no es válido."); }
+                    avisar("Perfiles importados con éxito.");
+                } catch(e) { avisar("El archivo no es válido."); }
             };
             reader.readAsText(file);
         };
@@ -1800,8 +1801,8 @@ els.btnSaveProfile.addEventListener('click', () => {
     }
 });
 
-els.btnDeleteProfile.addEventListener('click', () => {
-    if (state.currentProfile && confirm(`¿Eliminar perfil "${state.currentProfile}"?`)) {
+els.btnDeleteProfile.addEventListener('click', async () => {
+    if (state.currentProfile && await confirmar(`Se va a eliminar el perfil "${state.currentProfile}" con todos sus ajustes fijos.`, {titulo: 'Eliminar perfil', aceptar: 'Eliminar', peligro: true})) {
         const delName = state.currentProfile; delete state.profiles[state.currentProfile];
         clearFormData(); saveProfiles();
     }
@@ -1852,7 +1853,7 @@ if (els.btnExportBom) {
     els.btnExportBom.addEventListener('click', async () => {
         const lista = lastCalcResults['_listaMaterialesUnidad'] || [];
         const nombre = state.currentPiece || 'pieza';
-        if (lista.length === 0) { alert('No hay materiales calculados. Completa los datos de la pieza primero.'); return; }
+        if (lista.length === 0) { avisar('No hay materiales calculados. Completa los datos de la pieza primero.'); return; }
         
         // Agrupar por filamento
         const grupos = {};
@@ -1926,7 +1927,7 @@ function buildMaterialesFromPieceData(pieceData, camas) {
 const btnExportProjectBom = document.getElementById('btnExportProjectBom');
 if (btnExportProjectBom) {
     btnExportProjectBom.addEventListener('click', async () => {
-        if (!state._lastProjectCalc) { alert('Primero calcula el proyecto.'); return; }
+        if (!state._lastProjectCalc) { avisar('Primero calcula el proyecto.'); return; }
         const p = state._lastProjectCalc;
         const nombre = state.currentProject || state.currentPiece || 'proyecto';
         // Leer desde pieceData guardada (no depende del dropdown actual)
@@ -1960,7 +1961,7 @@ if (btnExportProjectBom) {
 const btnExportMegaBom = document.getElementById('btnExportMegaBom');
 if (btnExportMegaBom) {
     btnExportMegaBom.addEventListener('click', async () => {
-        if (!state._lastMegaProjectCalc || state.megaProjectItems.length === 0) { alert('Primero agrega proyectos al Mega Proyecto.'); return; }
+        if (!state._lastMegaProjectCalc || state.megaProjectItems.length === 0) { avisar('Primero agrega proyectos al Mega Proyecto.'); return; }
         const nombre = state.currentMegaProject || 'mega_proyecto';
         const gruposGlobal = {};
 
@@ -2094,7 +2095,7 @@ function autoSaveCurrentState() {
     const btn = document.getElementById('btnDuplicatePiece');
     if (!btn) return;
     btn.addEventListener('click', () => {
-        if (!state.currentPiece) { alert('Carga una pieza primero para duplicarla.'); return; }
+        if (!state.currentPiece) { avisar('Carga una pieza primero para duplicarla.'); return; }
         els.pieceNameInput.value = 'Copia de ' + state.currentPiece;
         window._isDuplicating = true;
         els.pieceModal.classList.add('active');
@@ -2392,7 +2393,7 @@ function autoSaveCurrentState() {
         const cfg = TIPOS[tipo];
         const viejo = cfg.actual();
         if (!viejo) {
-            alert('Primero carga un ' + cfg.etiqueta + ' para poder renombrarlo.');
+            avisar('Primero carga un ' + cfg.etiqueta + ' para poder renombrarlo.');
             return;
         }
         tipoActivo = tipo;
@@ -2424,7 +2425,7 @@ function autoSaveCurrentState() {
         if (window.renderMegaProjectList) window.renderMegaProjectList();
     }
 
-    function confirmar() {
+    async function aplicarRenombrado() {
         if (!tipoActivo) return;
         const cfg = TIPOS[tipoActivo];
         const viejo = cfg.actual();
@@ -2432,7 +2433,7 @@ function autoSaveCurrentState() {
         if (!nuevo || nuevo === viejo) { cerrar(); return; }
 
         const mapa = cfg.mapa();
-        if (mapa[nuevo] && !confirm('Ya existe un ' + cfg.etiqueta + ' llamado "' + nuevo + '". ¿Reemplazarlo?')) return;
+        if (mapa[nuevo] && !(await confirmar('Ya existe un ' + cfg.etiqueta + ' llamado "' + nuevo + '". Si continúas se reemplaza por este.', {titulo: 'Nombre repetido', aceptar: 'Reemplazar', peligro: true}))) return;
 
         mapa[nuevo] = mapa[viejo];
         delete mapa[viejo];
@@ -2443,10 +2444,10 @@ function autoSaveCurrentState() {
         cerrar();
     }
 
-    btnOk.addEventListener('click', confirmar);
+    btnOk.addEventListener('click', aplicarRenombrado);
     btnNo.addEventListener('click', cerrar);
     input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); confirmar(); }
+        if (e.key === 'Enter') { e.preventDefault(); aplicarRenombrado(); }
         if (e.key === 'Escape') { e.preventDefault(); cerrar(); }
     });
     modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });

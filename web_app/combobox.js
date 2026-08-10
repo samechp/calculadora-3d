@@ -20,7 +20,7 @@ function crear(select, textoVacio) {
         '  <input type="text" class="piece-combo-input" role="combobox" autocomplete="off"' +
         '         aria-expanded="false" aria-autocomplete="list" placeholder="' + esc(textoVacio) + '">' +
         '  <span class="piece-combo-count"></span>' +
-        '  <button type="button" class="piece-combo-btn combo-limpiar" tabindex="-1"><i class="bi bi-x-lg"></i></button>' +
+        '  <button type="button" class="piece-combo-btn piece-combo-clear combo-limpiar" tabindex="-1"><i class="bi bi-x-lg"></i></button>' +
         '  <button type="button" class="piece-combo-btn piece-combo-arrow" tabindex="-1"><i class="bi bi-chevron-down"></i></button>' +
         '</div>' +
         '<div class="piece-combo-list" role="listbox" hidden></div>';

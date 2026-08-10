@@ -33,61 +33,125 @@ function initFilamentos() {
             sel.value = currentVal; // restaurar si existe
         });
 
-        if(state.filamentosGuardados.length === 0) {
-            els.filamentosList.innerHTML = '<span style="color:var(--text-muted); font-size:0.9rem;">No hay filamentos guardados.</span>';
-            return;
-        }
+        // La lista se ve en una tabla aparte; aquí solo queda el acceso
+        const n = state.filamentosGuardados.length;
+        els.filamentosList.innerHTML = '';
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = 'btn btn-outline ver-filamentos';
+        boton.innerHTML = n
+            ? '<i class="bi bi-table"></i> Ver filamentos guardados <span class="ver-filamentos-num">' + n + '</span>'
+            : '<i class="bi bi-table"></i> Todavía no hay filamentos guardados';
+        boton.disabled = !n;
+        boton.addEventListener('click', abrirTablaFilamentos);
+        els.filamentosList.appendChild(boton);
+    }
 
-        state.filamentosGuardados.forEach(f => {
-            const item = document.createElement('div');
-            item.style.display = 'flex';
-            item.style.justifyContent = 'space-between';
-            item.style.alignItems = 'center';
-            item.style.padding = '0.5rem';
-            item.style.background = 'rgba(255,255,255,0.05)';
-            item.style.borderRadius = '0.375rem';
-            item.innerHTML = `
-                <div>
-                    <strong>${f.marca} ${f.tipo}</strong> - ${f.color} 
-                    <br><small style="color:var(--text-muted);">$${f.precio} ${f.moneda}/kg</small>
-                </div>
-                <button class="btn-remove-filamento" data-id="${f.id}" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i class="bi bi-x-lg"></i></button>
-            `;
-            els.filamentosList.appendChild(item);
+    // ---- Tabla editable de filamentos ----
+    const TIPOS = ['PLA', 'PETG', 'ABS', 'TPU', 'ASA', 'Otro'];
+    let modalTabla = null;
+
+    function escapar(s) {
+        return (s || '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function cerrarTabla() {
+        if (modalTabla) { modalTabla.remove(); modalTabla = null; }
+    }
+
+    function abrirTablaFilamentos() {
+        cerrarTabla();
+        modalTabla = document.createElement('div');
+        modalTabla.className = 'modal active filamentos-modal';
+        modalTabla.innerHTML =
+            '<div class="modal-content filamentos-content">' +
+            '  <div class="version-modal-head">' +
+            '    <h3>Filamentos guardados</h3>' +
+            '    <button class="update-bar-close" data-cerrar><i class="bi bi-x-lg"></i></button>' +
+            '  </div>' +
+            '  <p class="ajustes-nota">Edita cualquier casilla y se guarda sola. Los precios se aplican ' +
+            '     de inmediato a las piezas que usen ese filamento.</p>' +
+            '  <div class="tabla-scroll"><table class="tabla-filamentos"><thead><tr>' +
+            '    <th>Marca</th><th>Tipo</th><th>Color</th><th>Precio por kg</th><th>Moneda</th><th></th>' +
+            '  </tr></thead><tbody></tbody></table></div>' +
+            '</div>';
+        document.body.appendChild(modalTabla);
+        modalTabla.addEventListener('click', (e) => {
+            if (e.target === modalTabla || e.target.closest('[data-cerrar]')) cerrarTabla();
+        });
+        pintarTabla();
+    }
+
+    function pintarTabla() {
+        if (!modalTabla) return;
+        const cuerpo = modalTabla.querySelector('tbody');
+        const lista = state.filamentosGuardados
+            .slice()
+            .sort((a, b) => (a.marca + a.tipo + a.color).localeCompare(b.marca + b.tipo + b.color, 'es'));
+
+        cuerpo.innerHTML = lista.map(f => (
+            '<tr data-id="' + escapar(f.id) + '">' +
+            '  <td><div class="celda"><input type="text" data-campo="marca" value="' + escapar(f.marca) + '"></div></td>' +
+            '  <td><div class="celda"><select data-campo="tipo">' +
+                 TIPOS.map(t => '<option' + (t === f.tipo ? ' selected' : '') + '>' + t + '</option>').join('') +
+            '  </select></div></td>' +
+            '  <td><div class="celda"><input type="text" data-campo="color" value="' + escapar(f.color) + '"></div></td>' +
+            '  <td><div class="celda"><input type="number" min="0" step="0.01" data-campo="precio" value="' + escapar(f.precio) + '"></div></td>' +
+            '  <td><div class="celda"><select data-campo="moneda">' +
+                 ['COP', 'USD'].map(m => '<option' + (m === (f.moneda || 'COP') ? ' selected' : '') + '>' + m + '</option>').join('') +
+            '  </select></div></td>' +
+            '  <td><button class="tabla-borrar" title="Eliminar"><i class="bi bi-trash"></i></button></td>' +
+            '</tr>'
+        )).join('');
+
+        cuerpo.querySelectorAll('[data-campo]').forEach(campo => {
+            campo.addEventListener('change', () => {
+                const id = campo.closest('tr').getAttribute('data-id');
+                const fil = state.filamentosGuardados.find(x => x.id === id);
+                if (!fil) return;
+                const nombre = campo.getAttribute('data-campo');
+                let valor = campo.value;
+                if (nombre === 'precio') {
+                    const n = parseFloat(valor);
+                    if (isNaN(n) || n < 0) { campo.value = fil.precio; return; }
+                    valor = n;
+                } else if (nombre === 'marca' || nombre === 'color') {
+                    valor = valor.trim();
+                    if (!valor) { campo.value = fil[nombre]; return; }   // no se deja vacío
+                }
+                fil[nombre] = valor;
+                saveFilamentosLocal();
+                renderFilamentosGuardados();
+                if (typeof calculate === 'function') calculate();
+            });
         });
 
-        document.querySelectorAll('.btn-remove-filamento').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.target.getAttribute('data-id');
-                if(confirm('¿Estás seguro de eliminar este filamento? (Las piezas guardadas mantendrán su costo histórico)')) {
-                    state.filamentosGuardados = state.filamentosGuardados.filter(x => x.id !== id);
-                    saveFilamentosLocal();
-                    renderFilamentosGuardados();
-                    if(typeof calculate === 'function') calculate();
-                }
+        cuerpo.querySelectorAll('.tabla-borrar').forEach(b => {
+            b.addEventListener('click', async () => {
+                const fila = b.closest('tr');
+                const id = fila.getAttribute('data-id');
+                const fil = state.filamentosGuardados.find(x => x.id === id);
+                const ok = await confirmar(
+                    'Se elimina "' + (fil ? fil.marca + ' ' + fil.tipo + ' - ' + fil.color : '') + '". ' +
+                    'Las piezas ya guardadas mantendrán el costo con el que se calcularon.',
+                    { titulo: 'Eliminar filamento', aceptar: 'Eliminar', peligro: true });
+                if (!ok) return;
+                state.filamentosGuardados = state.filamentosGuardados.filter(x => x.id !== id);
+                saveFilamentosLocal();
+                renderFilamentosGuardados();
+                pintarTabla();
+                if (typeof calculate === 'function') calculate();
             });
         });
     }
 
     function saveFilamentosLocal() {
         localStorage.setItem('calculadora3d_filamentos', JSON.stringify(state.filamentosGuardados));
-        // Guardar directamente sin depender del flag _appReady
-        // (los filamentos son guardados por acción explícita del usuario)
-        const payload = JSON.stringify({
-            profiles: state.profiles || {},
-            pieces: state.pieces || {},
-            projects: state.projects || {},
-            megaProjects: state.megaProjects || {},
-            filamentos: state.filamentosGuardados || []
-        });
-        if (window.pywebview) {
-            window.pywebview.api.save_profiles(payload).then(() => {
-                if (typeof window.showSaveToast === 'function') window.showSaveToast('<i class="bi bi-check-circle"></i> Filamento guardado');
-            }).catch(e => console.error('Error guardando filamento:', e));
-        } else {
-            localStorage.setItem('calculadora3d_alldata', payload);
-            if (typeof window.showSaveToast === 'function') window.showSaveToast('<i class="bi bi-check-circle"></i> Filamento guardado');
-        }
+        // Se guarda por la vía normal para no dejar fuera datos nuevos (empresa,
+        // tema...). El "true" salta la espera de carga inicial, porque guardar un
+        // filamento es siempre una acción explícita del usuario.
+        if (window.saveAllData) window.saveAllData(true);
     }
 
     function loadFilamentosLocal() {
@@ -114,7 +178,7 @@ function initFilamentos() {
             const moneda = els.filMoneda.value;
 
             if(!marca || !color || isNaN(precio) || precio <= 0) {
-                alert('Por favor completa todos los campos del filamento correctamente.');
+                avisar('Por favor completa todos los campos del filamento correctamente.');
                 return;
             }
 

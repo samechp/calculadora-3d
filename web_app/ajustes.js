@@ -158,8 +158,14 @@ function pintarEmpresa(cuerpo) {
     });
 
     const nueva = cuerpo.querySelector('#ajNuevaEmpresa');
-    if (nueva) nueva.addEventListener('click', () => {
-        const nombre = (prompt_nombre() || '').trim();
+    if (nueva) nueva.addEventListener('click', async () => {
+        const nombre = (await pedirTexto('Nombre de la empresa', '', {
+            titulo: 'Nueva empresa',
+            icono: 'building',
+            ayuda: 'Con este nombre la identificas dentro de la app. Después le agregas el logo y el resto de datos.',
+            placeholder: 'Ej: PrintoVerse',
+            aceptar: 'Crear'
+        }) || '').trim();
         if (!nombre) return;
         empresas()[nombre] = { nombre: nombre };
         empresaEditando = nombre;
@@ -170,8 +176,8 @@ function pintarEmpresa(cuerpo) {
     });
 
     const borrar = cuerpo.querySelector('#ajBorrarEmpresa');
-    if (borrar) borrar.addEventListener('click', () => {
-        if (!confirm('¿Eliminar la empresa "' + empresaEditando + '"?')) return;
+    if (borrar) borrar.addEventListener('click', async () => {
+        if (!(await confirmar('Se eliminan sus datos y su logo.', {titulo: 'Eliminar ' + empresaEditando, aceptar: 'Eliminar', peligro: true}))) return;
         delete empresas()[empresaEditando];
         if (state.empresaActiva === empresaEditando) state.empresaActiva = null;
         empresaEditando = null;
@@ -199,7 +205,7 @@ function pintarEmpresa(cuerpo) {
             const f = archivo.files && archivo.files[0];
             if (!f) return;
             reducirImagen(f, (dataUrl) => {
-                if (!dataUrl) { alert('No se pudo leer la imagen.'); return; }
+                if (!dataUrl) { avisar('No se pudo leer la imagen.'); return; }
                 empresas()[empresaEditando].logo = dataUrl;
                 guardar();
                 pintarEmpresa(cuerpo);
@@ -212,13 +218,6 @@ function pintarEmpresa(cuerpo) {
         guardar();
         pintarEmpresa(cuerpo);
     });
-}
-
-// Pide un nombre sin depender de prompt() del navegador, que en algunas
-// versiones de WebView2 no aparece.
-function prompt_nombre() {
-    const nombre = window.prompt ? window.prompt('Nombre de la empresa:', '') : null;
-    return nombre;
 }
 
 // Reduce el logo a 400 px de ancho como máximo para que el archivo de datos
@@ -326,12 +325,15 @@ async function pintarApp(cuerpo) {
 
     cuerpo.querySelectorAll('[data-restaurar]').forEach(b => {
         b.addEventListener('click', async () => {
-            if (!confirm('¿Restaurar esta copia?\n\nSe reemplazarán tus datos actuales por los de esa fecha ' +
-                         'y la app se cerrará para volver a cargarlos. Antes se guarda una copia de lo de ahora.')) return;
+            const ok0 = await confirmar(
+                'Tus datos actuales se reemplazan por los de esa fecha. Antes se guarda una copia de lo de ahora, ' +
+                'así que puedes volver atrás.',
+                { titulo: 'Restaurar copia', aceptar: 'Restaurar', peligro: true });
+            if (!ok0) return;
             b.disabled = true; b.textContent = 'Restaurando…';
             const ok = await a.restaurar_copia(b.getAttribute('data-restaurar'));
-            if (ok) alert('Listo. Vuelve a abrir la aplicación para ver los datos restaurados.');
-            else { alert('No se pudo restaurar la copia.'); b.disabled = false; b.textContent = 'Restaurar'; }
+            if (ok) avisar('Listo. Vuelve a abrir la aplicación para ver los datos restaurados.');
+            else { avisar('No se pudo restaurar la copia.'); b.disabled = false; b.textContent = 'Restaurar'; }
         });
     });
 }

@@ -88,7 +88,7 @@ function barraEjecutable(info) {
 
     btn.addEventListener('click', () => {
         const a = api();
-        if (!a) { alert('La actualización solo funciona desde la aplicación de escritorio.'); return; }
+        if (!a) { avisar('La actualización solo funciona desde la aplicación de escritorio.'); return; }
         btn.disabled = true;
         btn.textContent = 'Descargando… 0%';
         omitir.style.display = 'none';
@@ -184,10 +184,13 @@ async function abrirVersiones() {
     }
 
     cont.querySelectorAll('[data-instalar]').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             const v = btn.getAttribute('data-instalar');
-            if (!confirm('¿Instalar la versión ' + v + '?\n\nLa app se reiniciará sola y se quedará en esa ' +
-                         'versión hasta que reactives las actualizaciones. Tus datos no se tocan.')) return;
+            const ok = await confirmar(
+                'La app se reiniciará sola y se quedará en la versión ' + v + ' hasta que reactives las ' +
+                'actualizaciones. Tus datos no se tocan.',
+                { titulo: 'Instalar la versión ' + v, aceptar: 'Instalar' });
+            if (!ok) return;
             cont.querySelectorAll('.version-btn').forEach(b => { b.disabled = true; });
             btn.textContent = 'Descargando… 0%';
             a.instalar_version(v);

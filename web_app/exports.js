@@ -189,7 +189,7 @@ function generarBOM() {
         multiplier = 1; // Assuming mega project already sums up... wait, mega project calculation loops through projects.
         // Actually, we don't have BOM array in Mega Project calculation stored. 
         // We'll just export for Project or Piece.
-        alert("BOM Export for Mega Projects requires deeper integration. Exporting from current Project/Piece instead.");
+        avisar("BOM Export for Mega Projects requires deeper integration. Exporting from current Project/Piece instead.");
         return;
     }
     
@@ -200,7 +200,7 @@ function generarBOM() {
     }
     
     if(!lastCalcResults['_listaMaterialesUnidad']) {
-        alert("No hay materiales registrados.");
+        avisar("No hay materiales registrados.");
         return;
     }
     

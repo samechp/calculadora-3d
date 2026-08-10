@@ -44,6 +44,7 @@ ARCHIVOS_WEB = [
     'ayuda.js',
     'ajustes.js',
     'combobox.js',
+    'dialogos.js',
     'actualizacion.js',
     'exports.js',
     'filamentos_logic.js',

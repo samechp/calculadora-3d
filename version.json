@@ -1,6 +1,6 @@
 {
   "app_version": "1.0.3",
-  "web_version": "1.0.5",
+  "web_version": "1.0.6",
   "web_files": [
     "index.html",
     "style.css",
@@ -12,9 +12,10 @@
     "ayuda.js",
     "ajustes.js",
     "combobox.js",
+    "dialogos.js",
     "actualizacion.js",
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Corrige archivos faltantes en la actualizacion de interfaz"
+  "notas": "Cuadros propios en vez de los del navegador, tabla editable de filamentos y arreglo del boton de limpiar"
 }
