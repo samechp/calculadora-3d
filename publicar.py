@@ -39,8 +39,11 @@ ARCHIVOS_WEB = [
     'bootstrap-icons.css',
     'bootstrap-icons.woff2',
     'printoverse-logo.png',
+    'printoverse-logo-claro.png',
     'app.js',
     'ayuda.js',
+    'ajustes.js',
+    'combobox.js',
     'actualizacion.js',
     'exports.js',
     'filamentos_logic.js',
@@ -59,6 +62,25 @@ ARCHIVOS_FUENTE = [
 
 def paso(texto):
     print('\n=== {} ==='.format(texto))
+
+
+def revisar_archivos_web():
+    """Si el index.html pide un archivo local que no está en ARCHIVOS_WEB, quien
+    actualice recibiría una interfaz a la que le faltan piezas. Mejor no publicar."""
+    html = open(os.path.join(RAIZ, 'web_app', 'index.html'), encoding='utf-8').read()
+    referencias = set(re.findall(r'(?:src|href)\s*=\s*"([^"#?:]+\.(?:js|css|png|jpg|webp|woff2?))"', html))
+    referencias |= set(re.findall(r"url\(\"([^\"/:]+\.(?:png|jpg|webp|woff2?))\"\)",
+                                  open(os.path.join(RAIZ, 'web_app', 'style.css'), encoding='utf-8').read()))
+    faltan = sorted(r for r in referencias if r not in ARCHIVOS_WEB)
+    if faltan:
+        raise SystemExit(
+            'Estos archivos los usa la interfaz pero no están en ARCHIVOS_WEB de publicar.py:\n'
+            '  - ' + '\n  - '.join(faltan) +
+            '\nAgrégalos a la lista o los usuarios recibirán una interfaz incompleta.')
+
+    inexistentes = [n for n in ARCHIVOS_WEB if not os.path.exists(os.path.join(RAIZ, 'web_app', n))]
+    if inexistentes:
+        raise SystemExit('En ARCHIVOS_WEB hay archivos que no existen: ' + ', '.join(inexistentes))
 
 
 def correr(cmd, cwd=None, silencioso=False):
@@ -236,6 +258,8 @@ def main():
     app_actual, web_actual = leer_versiones()
     app_nueva = args.version_app or (subir_ultimo_numero(app_actual) if sube_app else app_actual)
     web_nueva = args.version_web or (subir_ultimo_numero(web_actual) if sube_web else web_actual)
+
+    revisar_archivos_web()
 
     print('Ejecutable: {} -> {}'.format(app_actual, app_nueva))
     print('Interfaz:   {} -> {}'.format(web_actual, web_nueva))
