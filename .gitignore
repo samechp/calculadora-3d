@@ -3,6 +3,13 @@ perfiles.json
 ventana.json
 save_log.txt
 web_update/
+# Las copias de seguridad son perfiles enteros: llevan dentro los mismos
+# costos, margenes y precios que perfiles.json. Faltaban desde que se
+# anadio la funcion en la 1.0.3, y este repositorio es publico.
+copias/
+# Que versiones se omitieron o se fijaron a mano. Es del equipo de cada
+# quien, no del programa.
+actualizaciones.json
 
 # Resultados de compilación
 build/
