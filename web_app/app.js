@@ -803,6 +803,7 @@ function calculate() {
         '_tiempo_prod_cama_h': tiempoProdCamaConBuffer_h,
         '_tiempo_prod_cama_h_real': tiempoProdCama_h,
         '_hInv': hInv,
+        '_mErrPct': mErr,
         'Tiempo Est. Producción': formatTime(tiempoTotalPieza_h)
     };
 
@@ -818,7 +819,9 @@ function calculate() {
     els.resCostoTotal.innerText = render(costoTotalCOP);
     els.resInsumos.innerText = render(insExCOPUnit);
     els.resManoObra.innerText = render(cManoObraCOP);
-    els.resTiempoProduccion.innerHTML = formatTime(tiempoTotalPiezaConBuffer_h) + (mErr > 0 ? ' <i class="bi bi-exclamation-triangle"></i>' : '');
+    els.resTiempoProduccion.innerHTML = formatTime(tiempoTotalPiezaConBuffer_h) +
+        (mErr > 0 ? ' <span class="anotacion" title="' + formatTime(tiempoTotalPieza_h) +
+            ' de trabajo real, mas el ' + mErr + '% de margen de error">+' + mErr + '%</span>' : '');
     els.resCostoProduccion.innerText = render(costoProduccionCOP);
     els.resGanancia.innerText = render(gananciaCOP);
     els.resTotalCobrar.innerText = render(totalCobrarCOP);
@@ -911,9 +914,11 @@ function calculateProject() {
     } else {
         els.containerUnidadesSobrantes.style.display = 'none';
     }
-    els.resHorasTotales.innerText = horasTotales.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' h';
-    els.resTiempoProduccionProyecto.innerText = formatTime(tiempoEstProyecto);
-    els.resGramosTotales.innerText = gramosTotales.toLocaleString('es-CO', { maximumFractionDigits: 0 }) + ' g';
+    const _pct = lastCalcResults['_mErrPct'] || 0;
+    const _nota = (txt) => txt + (_pct > 0 ? ' <span class="anotacion">+' + _pct + '%</span>' : '');
+    els.resHorasTotales.innerHTML = _nota(horasTotales.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' h');
+    els.resTiempoProduccionProyecto.innerHTML = _nota(formatTime(tiempoEstProyecto));
+    els.resGramosTotales.innerHTML = _nota(gramosTotales.toLocaleString('es-CO', { maximumFractionDigits: 0 }) + ' g');
     // Bobinas necesarias
     const GRAMOS_BOBINA = 1000;
     const bobinasNecesarias = Math.ceil(gramosTotales / GRAMOS_BOBINA);

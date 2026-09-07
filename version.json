@@ -1,14 +1,16 @@
 {
-  "app_version": "1.0.4",
-  "web_version": "1.0.8",
+  "app_version": "1.0.5",
+  "web_version": "1.1.0",
   "web_files": [
     "index.html",
     "style.css",
     "bootstrap-icons.css",
     "bootstrap-icons.woff2",
+    "archivo.woff2",
     "printoverse-logo.png",
     "printoverse-logo-claro.png",
     "app.js",
+    "panel.js",
     "ayuda.js",
     "ajustes.js",
     "combobox.js",
@@ -17,5 +19,5 @@
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "El logo de la empresa se elige con el dialogo de Windows"
+  "notas": "Interfaz nueva: el costo y el precio siempre a la vista, y ahora se avisa que numeros infla el margen de error"
 }

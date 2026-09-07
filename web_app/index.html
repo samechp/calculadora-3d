@@ -14,7 +14,6 @@
     </script>
     <link rel="stylesheet" href="bootstrap-icons.css">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container main-container">
@@ -23,6 +22,19 @@
             <div class="marca-texto">
                 <h1>Calculadora de Impresión 3D</h1>
                 <span class="marca-nombre">Printo<span>Verse</span></span>
+            </div>
+            <div class="regleta" id="regleta">
+                <div class="regleta-lectura regleta-costo" id="regletaCosto">
+                    <span class="regleta-legend">Costo de producción &middot; <span class="piso">piso</span></span>
+                    <span class="regleta-val" id="railCosto">&mdash;</span>
+                </div>
+                <div class="regleta-lectura regleta-precio" id="regletaPrecio">
+                    <span class="regleta-legend">Total a cobrar &middot; c/u</span>
+                    <span class="regleta-val" id="railPrecio">&mdash;</span>
+                </div>
+                <div class="regleta-estado" id="railEstado">
+                    <span class="regleta-piloto"></span><span id="railEstadoTexto">Sin datos</span>
+                </div>
             </div>
         </header>
 
@@ -61,9 +73,9 @@
                         </div>
                     </div>
                     <!-- Gestor de Filamentos -->
-                    <div class="filamentos-manager-section" style="grid-column: 1 / -1; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--hundido);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 style="margin: 0; font-size: 1.1rem; color: var(--primary);">Base de Datos de Filamentos</h3>
+                    <div class="filamentos-manager-section">
+                        <div class="filamentos-manager-cabecera">
+                            <h3>Base de Datos de Filamentos</h3>
                         </div>
                         <div class="input-grid">
                             <div class="input-group">
@@ -96,8 +108,8 @@
                                 </div>
                             </div>
                         </div>
-                        <button type="button" id="btnSaveFilamento" class="btn btn-outline" style="margin-top: 1rem; width: 100%;"><i class="bi bi-plus-lg"></i> Guardar Filamento</button>
-                        <div id="filamentosList" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto;">
+                        <button type="button" id="btnSaveFilamento" class="btn btn-outline btn-ancho"><i class="bi bi-plus-lg"></i> Guardar Filamento</button>
+                        <div id="filamentosList" class="filamentos-lista">
                             <!-- Items dinámicos -->
                         </div>
                     </div>
@@ -165,53 +177,53 @@
                 <div class="input-grid">
                     <div class="input-group">
                         <label>Tiempo de impresión (Horas / Minutos)</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" id="horasImpresion" min="0" step="1" placeholder="Hrs" style="flex: 1; border-radius: 0.375rem;">
-                            <input type="number" id="minutosImpresion" min="0" max="59" step="1" placeholder="Min" style="flex: 1; border-radius: 0.375rem;">
+                        <div class="fila-tiempo">
+                            <input type="number" id="horasImpresion" min="0" step="1" placeholder="Hrs">
+                            <input type="number" id="minutosImpresion" min="0" max="59" step="1" placeholder="Min">
                         </div>
                     </div>
                     
-                    <div class="input-group" style="grid-column: 1 / -1;">
+                    <div class="input-group col-entera">
                         <label>Material Principal</label>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <select id="mainFilamentoSelect" style="flex: 2; min-width: 150px;">
+                        <div class="fila-material">
+                            <select id="mainFilamentoSelect">
                                 <option value="">-- Seleccione un filamento --</option>
                             </select>
-                            <input type="number" id="gramosFilamento" min="0" step="1" placeholder="Gramos" style="flex: 1; min-width: 80px;">
+                            <input type="number" id="gramosFilamento" min="0" step="1" placeholder="Gramos">
                             <!-- Hidden legacy color for backwards compat -->
                             <input type="hidden" id="colorPrincipal" value="">
                         </div>
                     </div>
                     
-                    <div class="input-group" style="grid-column: 1 / -1;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="checkbox" id="checkVariosFilamentos" style="width: auto; cursor: pointer;">
+                    <div class="input-group col-entera">
+                        <label class="label-check">
+                            <input type="checkbox" id="checkVariosFilamentos">
                             Varios Filamentos (misma pieza)
                         </label>
                     </div>
 
-                    <div id="variosFilamentosSection" style="display: none; grid-column: 1 / -1; padding-left: 1rem; border-left: 2px solid var(--border);">
+                    <div id="variosFilamentosSection" class="col-entera varios-filamentos" style="display: none;">
                         <div id="filamentosExtraContainer"></div>
-                        <button type="button" id="btnAñadirFilamentoExtra" class="btn btn-outline" style="margin-top: 0.5rem; font-size: 0.8rem; padding: 0.35rem 0.75rem;"><i class="bi bi-plus-lg"></i> Añadir Filamento Extra</button>
+                        <button type="button" id="btnAñadirFilamentoExtra" class="btn btn-outline btn-suelto"><i class="bi bi-plus-lg"></i> Añadir Filamento Extra</button>
                     </div>
 
                     <div class="input-group">
                         <label>Tiempo Preparador / Modelado (Fijo x Proyecto)</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" id="horasInvertidas" min="0" step="1" placeholder="Hrs" style="flex: 1; border-radius: 0.375rem;">
-                            <input type="number" id="minutosInvertidas" min="0" max="59" step="1" placeholder="Min" style="flex: 1; border-radius: 0.375rem;">
+                        <div class="fila-tiempo">
+                            <input type="number" id="horasInvertidas" min="0" step="1" placeholder="Hrs">
+                            <input type="number" id="minutosInvertidas" min="0" max="59" step="1" placeholder="Min">
                         </div>
                     </div>
                     <div class="input-group">
                         <label>Tiempo Operario (Por Cama)</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" id="minutosOperario" min="0" step="1" placeholder="Minutos" style="flex: 1; border-radius: 0.375rem;">
+                        <div class="fila-tiempo">
+                            <input type="number" id="minutosOperario" min="0" step="1" placeholder="Minutos">
                         </div>
                     </div>
                     <div class="input-group">
                         <label>Tiempo Prep. Máquina (Calentamiento x Cama)</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" id="minutosPrepMaquina" min="0" step="1" placeholder="Minutos" style="flex: 1; border-radius: 0.375rem;">
+                        <div class="fila-tiempo">
+                            <input type="number" id="minutosPrepMaquina" min="0" step="1" placeholder="Minutos">
                         </div>
                     </div>
                     <div class="input-group">
@@ -226,7 +238,7 @@
                 <div class="partes-extra-section">
                     <div class="tab-section-header">
                         <span><i class="bi bi-puzzle"></i> Partes Extra (Diferente Cama)</span>
-                        <button type="button" id="btnAddParte" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;"><i class="bi bi-plus-lg"></i> Agregar Parte</button>
+                        <button type="button" id="btnAddParte" class="btn btn-outline"><i class="bi bi-plus-lg"></i> Agregar Parte</button>
                     </div>
                     <p class="section-hint" style="margin-bottom:1rem;">Cada parte se imprime en una cama diferente. El tiempo de operario y prep. máquina se multiplica automáticamente.</p>
                     <div id="partesExtraContainer"></div>
@@ -238,16 +250,16 @@
                 <div class="insumos-extra-section">
                     <div class="tab-section-header">
                         <span><i class="bi bi-box-seam"></i> Insumos Extra</span>
-                        <button type="button" id="btnAddInsumoPieza" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;"><i class="bi bi-plus-lg"></i> Agregar insumo</button>
+                        <button type="button" id="btnAddInsumoPieza" class="btn btn-outline"><i class="bi bi-plus-lg"></i> Agregar insumo</button>
                     </div>
                     <div id="insumosExtraContainerPieza"></div>
                     <!-- Resumen de insumos -->
-                    <div id="insumosResumenPieza" class="insumos-resumen" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(138, 180, 248, 0.06); border: 1px solid var(--border); border-radius: 0.375rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span style="font-size: 0.85rem; color: var(--text-muted);">Costo total insumos extra:</span>
-                            <span id="insumoCostoTotalPieza" style="font-family: monospace; color: var(--text-main); font-weight: 600;">$0</span>
+                    <div id="insumosResumenPieza" class="insumos-resumen" style="display: none;">
+                        <div class="result-item">
+                            <span>Costo total insumos extra:</span>
+                            <span id="insumoCostoTotalPieza" class="val">$0</span>
                         </div>
-                        <div class="input-group" style="margin-top: 0.5rem;">
+                        <div class="input-group">
                             <label for="insumosACobrar">Precio a cobrar por insumos extra</label>
                             <div class="input-with-select">
                                 <input type="number" id="insumosACobrar" min="0" step="0.01" placeholder="Dejar vacío = costo real">
@@ -579,11 +591,11 @@
                 <!-- Zona fija: Precio de venta y márgenes -->
                 <div class="piece-fixed-bottom">
                 <!-- Precio de Venta Personalizado (Pieza) -->
-                <div style="margin-top: 1rem; padding: 1rem; border: 1px dashed var(--border); border-radius: 0.5rem; background: rgba(138,180,248,0.04);">
-                    <div class="input-group" style="margin-bottom: 0;">
-                        <label for="precioVentaPieza" style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="bloque-anexo">
+                    <div class="input-group">
+                        <label for="precioVentaPieza" class="label-check">
                             <i class="bi bi-tag"></i> Precio de Venta (c/u)
-                            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">(Opcional — sobreescribe el "Total a Cobrar")</span>
+                            <span class="label-aparte">(Opcional — sobreescribe el "Total a Cobrar")</span>
                         </label>
                         <input type="number" id="precioVentaPieza" min="0" step="0.01" placeholder="Dejar vacío = usar precio calculado">
                     </div>
@@ -636,7 +648,7 @@
 <!-- Sección 5: Resultados -->
             <section class="card results-card" style="display: flex; flex-direction: column;">
                 <div class="card-header results-header">
-                    <h2>5. Resultados <span style="font-size:0.75em; color:var(--text-muted); font-weight:400;">(por unidad)</span></h2>
+                    <h2>Resultados <span>· por unidad</span></h2>
                     <div class="result-toggle">
                         <span id="labelCOP" class="active">COP</span>
                         <label class="switch">
@@ -708,12 +720,12 @@
                     </div>
                 </div>
                 
-                <div class="export-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
-                    <button id="btnExportPdf" class="btn btn-danger" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">
+                <div class="export-actions">
+                    <button id="btnExportPdf" class="btn btn-danger">
                         Generar PDF
                     </button>
-                    <button id="btnExportBom" class="btn btn-outline" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">Lista de Materiales</button>
-                    <button id="btnExportExcel" class="btn btn-success" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">
+                    <button id="btnExportBom" class="btn btn-outline">Lista de Materiales</button>
+                    <button id="btnExportExcel" class="btn btn-success">
                         Copia Excel
                     </button>
                 </div>
@@ -731,7 +743,7 @@
                     <span class="badge-optional">Opcional</span>
                 </div>
                 <p class="section-hint">Calcula cuántas camas, horas y material necesitas para un pedido grande.</p>
-                <div class="input-grid" style="margin-top:1rem;">
+                <div class="input-grid">
                     <div class="input-group">
                         <label for="unidadesPedido">Unidades necesitadas</label>
                         <input type="number" id="unidadesPedido" min="1" step="1" placeholder="Ej: 1000">
@@ -742,7 +754,7 @@
                     </div>
                 </div>
 
-                <div class="margin-section" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--border);">
+                <div class="margin-section">
                     <div class="input-group">
                         <label for="margenGananciaProyecto">Margen de Ganancia (Proyecto)</label>
                         <div class="slider-group">
@@ -762,7 +774,7 @@
                 </div>
 
                 <!-- Guardar Proyecto -->
-                <div class="save-piece-bar" style="margin-top:1.5rem; padding-top:1.5rem; border-top: 1px solid var(--border);">
+                <div class="save-piece-bar">
                     <select id="projectSelect"><option value="">-- Cargar Proyecto Guardado --</option></select>
                     <div class="btn-group">
                         <button id="btnSaveProject" class="btn btn-primary">Guardar Proyecto</button>
@@ -775,8 +787,8 @@
             <div class="results-panel" id="panelResultsProyecto">
 <!-- Resultados del Proyecto -->
                 <section class="card project-results" id="projectResults" style="display:none; margin-top: 1.5rem; flex-direction: column;">
-                <div class="card-header results-header" style="margin-bottom: 0;">
-                    <h2 style="font-size: 1.1rem; color: var(--primary);">Proyecto</h2>
+                <div class="card-header results-header">
+                    <h2>Resultados <span>· proyecto</span></h2>
                 </div>
                     
                     <div class="results-list">
@@ -794,7 +806,7 @@
                         </div>
                         <div class="result-item" id="containerUnidadesSobrantes" style="display:none;">
                             <span>Unidades sobrantes:</span>
-                            <span class="val" id="resUnidadesSobrantes" style="color: #f9c74f;">—</span>
+                            <span class="val bobina-warn" id="resUnidadesSobrantes">—</span>
                         </div>
                         <hr>
                         <div class="result-item">
@@ -867,7 +879,7 @@
                             <span class="val" id="resTotalProyecto">—</span>
                         </div>
                     </div>
-                    <div class="export-actions" style="margin-top: 1rem; display: flex; gap: 1rem;">
+                    <div class="export-actions">
                         <button id="btnExportProjectPdf" class="btn btn-danger" style="flex: 1; display:flex; justify-content:center; align-items:center; gap: 5px;">
                             PDF Proyecto
                         </button>
@@ -893,7 +905,7 @@
                 </div>
                 <p class="section-hint">Agrupa múltiples proyectos guardados para un presupuesto global conjunto.</p>
                 
-                <div class="input-grid" style="margin-top:1rem;">
+                <div class="input-grid">
                     <div class="input-group">
                         <label for="subProjectSelect">Seleccionar Proyecto Guardado</label>
                         <select id="subProjectSelect"><option value="">-- Proyectos Guardados --</option></select>
@@ -903,16 +915,16 @@
                     </div>
                 </div>
 
-                <div class="mega-project-items" style="margin-top: 1.5rem;">
-                    <ul id="megaProjectList" style="list-style: none; padding: 0; margin-top: 0.5rem; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 0.375rem; padding: 0.5rem;">
-                        <li style="color: var(--text-muted); text-align: center; font-size: 0.9rem;">Lista vacía</li>
+                <div class="mega-project-items">
+                    <ul id="megaProjectList" class="mega-lista">
+                        <li class="lista-vacia">Lista vacía</li>
                     </ul>
                 </div>
 
                 
 
                 <!-- Guardar Mega Proyecto -->
-                <div class="save-piece-bar" style="margin-top:1.5rem; padding-top:1.5rem; border-top: 1px solid var(--border);">
+                <div class="save-piece-bar">
                     <select id="megaProjectSelect"><option value="">-- Cargar Mega Proyecto --</option></select>
                     <div class="btn-group">
                         <button id="btnSaveMegaProject" class="btn btn-primary">Guardar Mega Proyecto</button>
@@ -924,8 +936,8 @@
             </div><!-- /input-panel mega -->
             <div class="results-panel" id="panelResultsMega">
                 <section class="card project-results" id="megaProjectResults" style="display:none; flex-direction: column;">
-                <div class="card-header results-header" style="margin-bottom: 0;">
-                    <h2 style="font-size: 1.1rem; color: var(--primary);">Mega Proyecto</h2>
+                <div class="card-header results-header">
+                    <h2>Resultados <span>· mega proyecto</span></h2>
                 </div>
                     <div class="results-list">
                         <div class="result-item"><span>Total de Camas:</span><span class="val" id="resMegaCamas">—</span></div>
@@ -949,7 +961,7 @@
                         <div class="result-item ganancia-item"><span>Ganancia combinada:</span><span class="val" id="resMegaGanancia">—</span></div>
                         <div class="result-item final-price"><span>Total a cobrar Mega Proyecto:</span><span class="val" id="resMegaTotal">—</span></div>
                     </div>
-                    <div class="export-actions" style="margin-top: 1rem; display: flex; gap: 1rem;">
+                    <div class="export-actions">
                         <button id="btnExportMegaPdf" class="btn btn-danger" style="flex: 1; display:flex; justify-content:center; align-items:center;">PDF Mega Proyecto</button>
                         <button id="btnExportMegaBom" class="btn btn-outline" style="flex: 1; display:flex; justify-content:center; align-items:center;">Lista de Materiales</button>
                         <button id="btnExportMegaExcel" class="btn btn-success" style="flex: 1; display:flex; justify-content:center; align-items:center;">Excel Mega Proyecto</button>
@@ -980,7 +992,7 @@
     <div id="pieceModal" class="modal">
         <div class="modal-content">
             <h3>Nombre de la Pieza</h3>
-            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">Se guardarán: horas impresión, gramos, horas invertidas, insumos, unid./cama y margen de ganancia.</p>
+            <p class="dialogo-nota">Se guardarán: horas impresión, gramos, horas invertidas, insumos, unid./cama y margen de ganancia.</p>
             <input type="text" id="pieceNameInput" placeholder="Ej: Llavero empresa X">
             <div class="modal-btn-group">
                 <button id="btnConfirmPiece" class="btn btn-primary">Guardar</button>
@@ -993,7 +1005,7 @@
     <div id="projectModal" class="modal">
         <div class="modal-content">
             <h3>Nombre del Proyecto</h3>
-            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">Se guardará la pieza, unidades del pedido y los resultados calculados.</p>
+            <p class="dialogo-nota">Se guardará la pieza, unidades del pedido y los resultados calculados.</p>
             <input type="text" id="projectNameInput" placeholder="Ej: Llavero empresa X - 1000 unidades">
             <div class="modal-btn-group">
                 <button id="btnConfirmProject" class="btn btn-primary">Guardar</button>
@@ -1006,7 +1018,7 @@
     <div id="renameModal" class="modal">
         <div class="modal-content">
             <h3 id="renameTitle">Renombrar</h3>
-            <p id="renameHint" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;"></p>
+            <p id="renameHint" class="dialogo-nota"></p>
             <input type="text" id="renameInput" placeholder="Nuevo nombre">
             <div class="modal-btn-group">
                 <button id="btnConfirmRename" class="btn btn-primary">Renombrar</button>
@@ -1019,7 +1031,7 @@
     <div id="megaProjectModal" class="modal">
         <div class="modal-content">
             <h3>Nombre del Mega Proyecto</h3>
-            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">Agrupa múltiples proyectos en uno solo.</p>
+            <p class="dialogo-nota">Agrupa múltiples proyectos en uno solo.</p>
             <input type="text" id="megaProjectNameInput" placeholder="Ej: Lote Empresa X">
             <div class="modal-btn-group">
                 <button id="btnConfirmMegaProject" class="btn btn-primary">Guardar</button>
@@ -1037,6 +1049,7 @@
     
     <script src="filamentos_logic.js"></script>
     <script src="app.js"></script>
+    <script src="panel.js"></script>
     <script src="dialogos.js"></script>
     <script src="combobox.js"></script>
     <script src="ajustes.js"></script>
