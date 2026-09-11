@@ -720,6 +720,13 @@
                         <span>Total a Cobrar (cama completa):</span>
                         <span id="resTotalCobrarCama" class="val">0</span>
                     </div>
+                    <div class="desglose-colores" id="desglosePieza" style="display:none;">
+                        <div class="desglose-cab">
+                            <span class="desglose-titulo">Filamento por color</span>
+                            <span class="desglose-nota">1 cama</span>
+                        </div>
+                        <ul class="desglose-lista" id="listaDesglosePieza"></ul>
+                    </div>
                 </div>
                 
                 <div class="export-actions">
@@ -837,6 +844,13 @@
                             <span><i class="bi bi-disc"></i> Bobinas necesarias (1 kg):</span>
                             <span class="val" id="resBobinas">—</span>
                         </div>
+                        <div class="desglose-colores" id="desgloseProyecto" style="display:none;">
+                            <div class="desglose-cab">
+                                <span class="desglose-titulo">Filamento por color</span>
+                                <label class="desglose-check"><input type="checkbox" class="check-bobinas" id="checkBobinasProyecto" checked> Contar bobinas</label>
+                            </div>
+                            <ul class="desglose-lista" id="listaDesgloseProyecto"></ul>
+                        </div>
                         <hr>
                         <div class="result-item">
                             <span>Precio material:</span>
@@ -928,6 +942,10 @@
                 </div>
 
                 <div class="mega-project-items">
+                    <div class="mega-lista-cab">
+                        <span>En este mega proyecto</span>
+                        <span class="cuenta" id="megaListaCuenta">0</span>
+                    </div>
                     <ul id="megaProjectList" class="mega-lista">
                         <li class="lista-vacia">Lista vacía</li>
                     </ul>
@@ -956,6 +974,13 @@
                         <div class="result-item"><span>Horas impresión:</span><span class="val" id="resMegaHoras">—</span></div>
                         <div class="result-item"><span>Tiempo Est. Producción:</span><span class="val" id="resMegaTiempo">—</span></div>
                         <div class="result-item"><span>Gramos totales:</span><span class="val" id="resMegaGramos">—</span></div>
+                        <div class="desglose-colores" id="desgloseMega" style="display:none;">
+                            <div class="desglose-cab">
+                                <span class="desglose-titulo">Filamento por color</span>
+                                <label class="desglose-check"><input type="checkbox" class="check-bobinas" id="checkBobinasMega" checked> Contar bobinas</label>
+                            </div>
+                            <ul class="desglose-lista" id="listaDesgloseMega"></ul>
+                        </div>
                         <hr>
                         <div class="result-item"><span>Precio material:</span><span class="val" id="resMegaFilamento">—</span></div>
                         <div class="result-item"><span>Precio luz:</span><span class="val" id="resMegaLuz">—</span></div>

@@ -1038,7 +1038,10 @@ input:checked + .slider.round:before { transform: translateX(18px); background-c
     background: var(--bg-card);
     border: 1px solid var(--primary); border-top: 0;
     border-radius: 0 0 var(--r) var(--r);
-    box-shadow: 0 2px 4px -2px var(--sombra);
+    /* Sombra larga a propósito: así se ve que está POR ENCIMA de lo que hay
+       debajo (en el mega proyecto caía sobre la lista de proyectos añadidos y
+       no se distinguía qué era sugerencia y qué ya estaba metido). */
+    box-shadow: 0 18px 32px -14px var(--sombra), 0 4px 10px -6px var(--sombra);
 }
 .piece-combo-list[hidden] { display: none; }
 .piece-combo-option {
@@ -1442,6 +1445,77 @@ body.con-aviso-update { padding-top: 3.4rem; }
 }
 .dialogo-nota { font-size: var(--t-ui); font-stretch: 88%; color: var(--text-muted); margin-bottom: 10px; }
 .mega-project-items { margin-top: 12px; }
+.mega-lista-cab {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2px;
+    font-size: var(--t-ui); font-stretch: 88%; color: var(--text-muted);
+}
+.mega-lista-cab .cuenta {
+    color: var(--text-tenue);
+    font-variant-numeric: tabular-nums;
+}
+.mega-lista .mega-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; margin-bottom: 4px;
+    border: 1px solid var(--linea); border-radius: var(--r);
+    background: var(--bg-card);
+    font-size: var(--t-ui);
+}
+.mega-lista .mega-item:last-child { margin-bottom: 0; }
+.mega-item-nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-main); }
+.mega-item-unidades {
+    flex-shrink: 0; color: var(--text-tenue);
+    font-variant-numeric: tabular-nums; font-stretch: 88%;
+}
+.mega-item-quitar {
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; padding: 0;
+    border: 0; border-radius: 50%; background: none;
+    color: var(--text-tenue); cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+.mega-item-quitar:hover { background: var(--realce); color: var(--danger); }
+
+/* ---- Filamento por color ----
+   Los gramos totales no dicen qué comprar: 800 g repartidos entre blanco y
+   negro son dos bobinas, no una. Esta lista los reparte por rollo. */
+.desglose-colores {
+    margin-top: 10px;
+    padding: 9px 10px;
+    border-radius: var(--r);
+    background: var(--panel-hondo);
+}
+.desglose-cab {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 4px;
+}
+.desglose-titulo {
+    font-size: var(--t-ui); font-stretch: 88%; font-weight: 600;
+    color: var(--text-main);
+}
+.desglose-nota, .desglose-check {
+    font-size: var(--t-ui); font-stretch: 88%; color: var(--text-tenue);
+}
+.desglose-check { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.desglose-check input { margin: 0; }
+.desglose-lista { list-style: none; margin: 0; padding: 0; }
+.desglose-fila {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--linea);
+    font-size: var(--t-ui); color: var(--text-muted);
+}
+.desglose-fila:last-child { border-bottom: 0; }
+.desglose-nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desglose-gramos {
+    flex-shrink: 0; color: var(--text-main); font-weight: 500;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.desglose-bobinas {
+    flex-shrink: 0; min-width: 72px; text-align: right;
+    color: var(--text-tenue); white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
 
 /* Cuando la sección no tiene resultados que mostrar, el panel de entrada se
    queda con todo el ancho: 400px de columna vacía a la derecha era el hueco

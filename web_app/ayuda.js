@@ -172,7 +172,7 @@ const AYUDA_RESULTADOS = {
     resHorasTotales: 'Solo las horas de la impresora trabajando, sumando todas las camas.',
     resTiempoProduccionProyecto: 'Tiempo real del pedido completo: impresión + calentamientos + tu tiempo de operario en cada cama.',
     resGramosTotales: 'Filamento total que vas a gastar en el pedido, con el margen de error incluido.',
-    resBobinas: 'Cuántos rollos de 1 kg necesitas comprar. Si se pone en amarillo es que no te alcanza con lo justo.',
+    resBobinas: 'Cuántos rollos de 1 kg necesitas comprar, contando cada color por separado: dos colores son dos rollos aunque entre los dos no llenen ni uno. Abajo está el reparto por color.',
     resMaterialesProyecto: 'Costo de imprimir todo el pedido (material + luz + desgaste + error), sin tu tiempo ni insumos.',
     resCostoProdPiezaProyecto: 'Lo que cuesta producir una sola unidad dentro de este pedido, ya con todo incluido.',
     resCostoProdTotalProyecto: 'Lo que cuesta producir el pedido completo. Es tu punto de equilibrio: por debajo de esto, pierdes.',
@@ -206,6 +206,15 @@ const AYUDA_SECCIONES = {
     '#megaProjectSection .card-header h2':
         'Junta varios proyectos ya guardados en una sola cotización. Sirve cuando un cliente pide cosas distintas ' +
         'a la vez y quieres un único total.',
+    '#desglosePieza .desglose-titulo':
+        'Cuánto filamento de cada color gasta UNA cama. El total en gramos no basta para saber qué comprar: ' +
+        'si la pieza lleva dos colores, hacen falta los dos rollos aunque entre los dos no llenen ni uno.',
+    '#desgloseProyecto .desglose-titulo':
+        'Cuánto filamento de cada color se gasta en TODO el pedido, y cuántas bobinas de 1 kg tocaría comprar de ' +
+        'cada uno. Las bobinas se cuentan por color, no sobre el total. Si ya tienes rollos empezados en casa y esa ' +
+        'cuenta te descuadra, apaga "Contar bobinas" y quedan solo los gramos.',
+    '#desgloseMega .desglose-titulo':
+        'El filamento de cada color sumando todos los proyectos del grupo: la lista de compra completa del pedido.',
     '.filamentos-manager-section h3':
         'Tu lista de filamentos con su precio por kilo. Regístralos una vez y luego solo los eliges en cada pieza; ' +
         'así cada pieza calcula con el precio del material que realmente usaste.',

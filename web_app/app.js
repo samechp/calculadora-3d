@@ -860,6 +860,10 @@ function calculate() {
         els.containerTotalCobrarCama.style.display = 'none';
     }
 
+    // Filamento por color de UNA cama (los gramos que se escriben son por cama)
+    pintarDesglose('desglosePieza', 'listaDesglosePieza',
+        agruparFilamentos(lastCalcResults['_listaMaterialesUnidad'], 1, 1), false);
+
     calculateProject();
     updatePieceActiveSummary();
     updateTabBadges();
@@ -948,14 +952,24 @@ function calculateProject() {
     els.resHorasTotales.innerHTML = _nota(horasTotales.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' h');
     els.resTiempoProduccionProyecto.innerHTML = _nota(formatTime(tiempoEstProyecto));
     els.resGramosTotales.innerHTML = _nota(gramosTotales.toLocaleString('es-CO', { maximumFractionDigits: 0 }) + ' g');
-    // Bobinas necesarias
-    const GRAMOS_BOBINA = 1000;
-    const bobinasNecesarias = Math.ceil(gramosTotales / GRAMOS_BOBINA);
+    // Filamento por color de TODO el pedido: es lo que se lleva a la tienda
+    const desgloseProyecto = agruparFilamentos(lastCalcResults['_listaMaterialesUnidad'], camasEquivalentes, factorError());
+    pintarDesglose('desgloseProyecto', 'listaDesgloseProyecto', desgloseProyecto, contarBobinas());
+
+    // Bobinas necesarias: se cuentan POR COLOR y luego se suman. Sobre el total
+    // engañaba: 264 g entre blanco y negro no es una bobina, son dos.
+    const bobinasNecesarias = desgloseProyecto.length
+        ? desgloseProyecto.reduce((n, g) => n + Math.ceil(g.gramos / GRAMOS_BOBINA), 0)
+        : Math.ceil(gramosTotales / GRAMOS_BOBINA);
     const resBobinas = document.getElementById('resBobinas');
     if (resBobinas) {
         resBobinas.textContent = bobinasNecesarias + (bobinasNecesarias === 1 ? ' bobina' : ' bobinas');
         resBobinas.className = 'val ' + (bobinasNecesarias > 1 ? 'bobina-warn' : 'bobina-ok');
     }
+    // La cuenta de bobinas se puede apagar: cuando ya hay rollos empezados en
+    // casa, "compra 2 bobinas" estorba más de lo que ayuda.
+    const containerBobinas = document.getElementById('containerBobinas');
+    if (containerBobinas) containerBobinas.style.display = contarBobinas() ? 'flex' : 'none';
 
     const renderProj = (valCOP) => {
         if(state.resultadosEnUSD) return formatMoney(valCOP / state.precioDolar, true);
@@ -997,11 +1011,150 @@ function calculateProject() {
         unidades, unidadesCama,
         tiempoEstProyecto,
         costoProduccionPiezaProyecto,
-        costoProduccionTotalProyecto
+        costoProduccionTotalProyecto,
+        desgloseFilamentos: desgloseProyecto
     };
 
     els.projectResults.style.display = 'block';
 }
+
+// ====== FILAMENTO POR COLOR ======
+// Los gramos totales dicen cuánto material sale, pero no de qué rollo. Aquí se
+// reparte por filamento, con su color, que es lo que hace falta para saber qué
+// comprar: dos colores en la misma pieza necesitan dos bobinas, aunque entre los
+// dos no llenen ni una.
+const GRAMOS_BOBINA = 1000;
+
+function escHtml(s) {
+    return (s || '').toString()
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function etiquetaFilamento(ref) {
+    if (!ref) return 'Filamento desconocido';
+    const marca = (ref.marca || '').trim();
+    const tipo = (ref.tipo || '').trim();
+    const color = (ref.color || '').trim();
+    const cabeza = [marca, (tipo && tipo !== '-') ? tipo : ''].filter(Boolean).join(' ');
+    if (cabeza && color) return cabeza + ' · ' + color;
+    return cabeza || color || 'Filamento desconocido';
+}
+
+// Agrupa gramos por filamento. "veces" son las camas (puede ser decimal si la
+// última va incompleta) y "factorError" el colchón del margen de error.
+function agruparFilamentos(items, veces, factorError) {
+    const orden = [];
+    const porClave = {};
+    (items || []).forEach(item => {
+        const ref = item.ref || {};
+        const gramos = (parseFloat(item.gramos) || 0) * (veces || 0) * (factorError || 1);
+        if (gramos <= 0) return;
+        const clave = ref.id || etiquetaFilamento(ref);
+        if (!porClave[clave]) {
+            porClave[clave] = {
+                clave: clave,
+                etiqueta: etiquetaFilamento(ref),
+                hex: window.Color ? window.Color.hexDeFilamento(ref) : '',
+                gramos: 0
+            };
+            orden.push(porClave[clave]);
+        }
+        porClave[clave].gramos += gramos;
+    });
+    orden.sort((a, b) => b.gramos - a.gramos);
+    return orden;
+}
+
+// Los gramos de cada filamento de una pieza GUARDADA (el mega proyecto no mira
+// el formulario, sino lo que quedó grabado en cada proyecto).
+function itemsDesdePieceData(pieceData) {
+    const items = [];
+    if (!pieceData) return items;
+    const ref = (id, etiqueta) => {
+        const f = state.filamentosGuardados.find(x => x.id === id);
+        return f || { marca: etiqueta || 'Filamento desconocido', tipo: '', color: '' };
+    };
+    const gMain = parseFloat(pieceData.gramosFilamento) || 0;
+    if (gMain > 0) items.push({ ref: ref(pieceData.filamentoPrincipalId, pieceData.filamentoPrincipalLabel), gramos: gMain });
+    if (pieceData.variosFilamentos && Array.isArray(pieceData.filamentosExtraItems)) {
+        pieceData.filamentosExtraItems.forEach(it => {
+            const g = parseFloat(it.gramos) || 0;
+            if (g > 0) items.push({ ref: ref(it.idFilamento, it.label), gramos: g });
+        });
+    }
+    if (Array.isArray(pieceData.partesExtraItems)) {
+        pieceData.partesExtraItems.forEach(parte => {
+            const g = parseFloat(parte.gramos) || 0;
+            if (g > 0) items.push({ ref: ref(parte.idFilamento, parte.label), gramos: g });
+        });
+    }
+    return items;
+}
+
+// Junta varios desgloses (los sub-proyectos del mega) en uno solo
+function fusionarDesgloses(listas) {
+    const orden = [];
+    const porClave = {};
+    (listas || []).forEach(lista => {
+        (lista || []).forEach(g => {
+            const clave = g.clave || g.etiqueta;
+            if (!porClave[clave]) {
+                porClave[clave] = { clave: clave, etiqueta: g.etiqueta, hex: g.hex, gramos: 0 };
+                orden.push(porClave[clave]);
+            }
+            porClave[clave].gramos += g.gramos || 0;
+        });
+    });
+    orden.sort((a, b) => b.gramos - a.gramos);
+    return orden;
+}
+
+function factorError() {
+    return 1 + ((lastCalcResults['_mErrPct'] || 0) / 100);
+}
+
+function pintarDesglose(idBloque, idLista, desglose, conBobinas) {
+    const bloque = document.getElementById(idBloque);
+    const lista = document.getElementById(idLista);
+    if (!bloque || !lista) return;
+    if (!desglose || desglose.length === 0) {
+        bloque.style.display = 'none';
+        lista.innerHTML = '';
+        return;
+    }
+    bloque.style.display = 'block';
+    lista.innerHTML = desglose.map(g => {
+        const cuadro = window.Color ? window.Color.muestraHTML(g.hex) : '';
+        const gramos = Math.round(g.gramos);
+        let bobinas = '';
+        if (conBobinas) {
+            const n = Math.ceil(g.gramos / GRAMOS_BOBINA);
+            bobinas = '<span class="desglose-bobinas">' + n + (n === 1 ? ' bobina' : ' bobinas') + '</span>';
+        }
+        return '<li class="desglose-fila">' + cuadro +
+               '<span class="desglose-nombre">' + escHtml(g.etiqueta) + '</span>' +
+               '<span class="desglose-gramos">' + gramos.toLocaleString('es-CO') + ' g</span>' +
+               bobinas + '</li>';
+    }).join('');
+}
+
+function contarBobinas() {
+    return state.contarBobinas !== false;
+}
+
+function sincronizarCheckBobinas() {
+    document.querySelectorAll('.check-bobinas').forEach(c => { c.checked = contarBobinas(); });
+}
+
+document.querySelectorAll('.check-bobinas').forEach(check => {
+    check.addEventListener('change', () => {
+        state.contarBobinas = check.checked;
+        sincronizarCheckBobinas();
+        calculate();
+        calculateMegaProject();
+        saveAllData();
+    });
+});
 
 // ====== PIEZAS GUARDADAS ======
 function getPieceData() {
@@ -1324,20 +1477,26 @@ els.btnConfirmProject.addEventListener('click', () => {
 // ====== MEGA PROYECTOS ======
 function renderMegaProjectItems() {
     els.megaProjectList.innerHTML = '';
+    const cuenta = document.getElementById('megaListaCuenta');
+    if (cuenta) cuenta.textContent = state.megaProjectItems.length;
     if (state.megaProjectItems.length === 0) {
-        els.megaProjectList.innerHTML = '<li style="color: var(--text-muted); text-align: center; font-size: 0.9rem;">Lista vacía</li>';
+        els.megaProjectList.innerHTML = '<li class="lista-vacia">Lista vacía</li>';
     } else {
         state.megaProjectItems.forEach((item, index) => {
             const li = document.createElement('li');
-            li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.alignItems = 'center';
-            li.style.padding = '0.5rem 0'; li.style.borderBottom = '1px solid var(--border)';
+            li.className = 'mega-item';
             const nameSpan = document.createElement('span');
-            nameSpan.innerText = `${item._nombre} (${item.unidadesPedido} u)`;
+            nameSpan.className = 'mega-item-nombre';
+            nameSpan.innerText = item._nombre;
+            const unidades = document.createElement('span');
+            unidades.className = 'mega-item-unidades';
+            unidades.innerText = `${item.unidadesPedido} u`;
             const btnRemove = document.createElement('button');
-            btnRemove.innerText = 'X'; btnRemove.style.color = '#ff4d4f'; btnRemove.style.background = 'none';
-            btnRemove.style.border = 'none'; btnRemove.style.cursor = 'pointer';
+            btnRemove.className = 'mega-item-quitar';
+            btnRemove.title = 'Quitar del mega proyecto';
+            btnRemove.innerHTML = '<i class="bi bi-x-lg"></i>';
             btnRemove.onclick = () => { state.megaProjectItems.splice(index, 1); renderMegaProjectItems(); refreshSubProjectSelect(); calculateMegaProject(); };
-            li.appendChild(nameSpan); li.appendChild(btnRemove);
+            li.appendChild(nameSpan); li.appendChild(unidades); li.appendChild(btnRemove);
             els.megaProjectList.appendChild(li);
         });
     }
@@ -1408,11 +1567,23 @@ function calculateMegaProject() {
     els.resMegaGanancia.innerText = renderProj(totalGanancia);
     els.resMegaTotal.innerText = renderProj(totalCobrar);
     
+    // Filamento por color de todo el mega proyecto: se suma el desglose de cada
+    // sub-proyecto. Los guardados antes de que esto existiera no lo traen, así
+    // que se rehace a partir de la pieza que quedó grabada en ellos.
+    const desgloseMega = fusionarDesgloses(state.megaProjectItems.map(item => {
+        const p = item.resultados || {};
+        if (Array.isArray(p.desgloseFilamentos) && p.desgloseFilamentos.length) return p.desgloseFilamentos;
+        const camasItem = (typeof p.camasEquivalentes === 'number') ? p.camasEquivalentes : (p.camas || 0);
+        return agruparFilamentos(itemsDesdePieceData(item.pieceData), camasItem, factorError());
+    }));
+    pintarDesglose('desgloseMega', 'listaDesgloseMega', desgloseMega, contarBobinas());
+
     state._lastMegaProjectCalc = { 
         totalCamas, totalHoras, totalTiempo_h, totalGramos, 
         totalMat, totalLuz, totalDesp, totalErr,
         totalMateriales, totalInsumos, totalManoObra, totalGanancia, totalCobrar,
-        costoProdPiezaMegaPromedio, totalCostoProdMega
+        costoProdPiezaMegaPromedio, totalCostoProdMega,
+        desgloseFilamentos: desgloseMega
     };
     els.megaProjectResults.style.display = 'block';
 }
@@ -1505,6 +1676,7 @@ async function saveAllData(forzar) {
             empresas: state.empresas || {},
             empresaActiva: state.empresaActiva || null,
             incluirEmpresa: !!state.incluirEmpresa,
+            contarBobinas: contarBobinas(),
             tema: state.tema || null
         });
         if (window.pywebview) {
@@ -1543,6 +1715,8 @@ async function loadProfiles() {
             state.empresas = parsed.empresas || {};
             state.empresaActiva = parsed.empresaActiva || null;
             state.incluirEmpresa = !!parsed.incluirEmpresa;
+            state.contarBobinas = parsed.contarBobinas !== false;
+            sincronizarCheckBobinas();
             state.tema = parsed.tema || null;
             if (window.aplicarTemaGuardado) window.aplicarTemaGuardado();
             if (window.renderFilamentosGuardados) window.renderFilamentosGuardados();

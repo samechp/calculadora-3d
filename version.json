@@ -1,6 +1,6 @@
 {
   "app_version": "1.0.5",
-  "web_version": "1.2.0",
+  "web_version": "1.2.1",
   "web_files": [
     "index.html",
     "style.css",
@@ -20,5 +20,5 @@
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Selector de color de filamentos, interfaz renovada y opcion de imprimir solo lo necesario sin sobrantes"
+  "notas": "Filamento por color en pieza, proyecto y mega proyecto: gramos y bobinas de cada rollo"
 }
