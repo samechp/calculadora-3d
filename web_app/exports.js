@@ -221,7 +221,7 @@ function generarBOM() {
     Object.values(filamentosMap).forEach(f => {
         let kgs = (f.gramos / 1000).toFixed(2);
         let rollos = Math.ceil(kgs);
-        report += `• ${f.ref.marca} ${f.ref.tipo} - ${f.ref.color}: ${f.gramos} g (aprox ${kgs} Kg -> ${rollos} rollos de 1Kg)\n`;
+        report += `• ${f.ref.marca} ${f.ref.tipo} - ${f.ref.color}${window.Color.textoColor(f.ref)}: ${f.gramos} g (aprox ${kgs} Kg -> ${rollos} rollos de 1Kg)\n`;
     });
     report += `\nTotal General Filamento: ${totalGramosGeneral} g\n\n`;
     

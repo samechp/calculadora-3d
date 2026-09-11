@@ -113,6 +113,11 @@ const AYUDA_CAMPOS = {
     unidadesPedido:
         'Cuántas unidades te pidieron en total. Con esto se calcula cuántas camas hay que imprimir, ' +
         'cuánto material comprar y el precio del pedido completo.',
+    checkSinSobrantes:
+        'Por defecto se imprimen camas completas, así sobren piezas. Si lo activas, la última cama se llena solo ' +
+        'con las que faltan para el pedido: no quedan sobrantes y pagas menos filamento, luz y horas de impresión. ' +
+        'El calentamiento de la máquina y tu tiempo de operario siguen contando completos, porque esa cama igual ' +
+        'hay que montarla y atenderla.',
     precioUnitarioManual:
         'Precio por unidad pactado con el cliente para este pedido. Si lo llenas, el total del proyecto usa este valor ' +
         'en vez del calculado. Útil para descuentos por cantidad.',
@@ -160,9 +165,10 @@ const AYUDA_RESULTADOS = {
 
     // Proyecto
     resUnidadesCamaProyecto: 'Cuántas copias entran en una impresión, tal como lo configuraste en la pieza.',
-    resCamas: 'Cuántas impresiones completas hay que hacer para cubrir el pedido (siempre se redondea hacia arriba).',
-    resUnidadesProducidas: 'Unidades que salen realmente al llenar todas esas camas.',
+    resCamas: 'Cuántas impresiones hay que hacer para cubrir el pedido (siempre se redondea hacia arriba). Si marcaste "sin sobrantes", la última va incompleta.',
+    resUnidadesProducidas: 'Unidades que salen realmente. Con camas completas puede ser más de lo pedido; si marcaste "sin sobrantes", es justo lo pedido.',
     resUnidadesSobrantes: 'Piezas de más que quedan porque la última cama no se llena justo. Te sirven de repuesto o para vender sueltas.',
+    resUltimaCama: 'Cuántas piezas van en la última cama cuando la llenas solo con lo que falta. El resto del espacio queda vacío.',
     resHorasTotales: 'Solo las horas de la impresora trabajando, sumando todas las camas.',
     resTiempoProduccionProyecto: 'Tiempo real del pedido completo: impresión + calentamientos + tu tiempo de operario en cada cama.',
     resGramosTotales: 'Filamento total que vas a gastar en el pedido, con el margen de error incluido.',

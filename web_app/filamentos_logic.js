@@ -28,6 +28,8 @@ function initFilamentos() {
                 const opt = document.createElement('option');
                 opt.value = f.id;
                 opt.text = `${f.marca} ${f.tipo} - ${f.color} ($${f.precio} ${f.moneda})`;
+                // De aquí saca el cuadrito el desplegable con buscador
+                opt.setAttribute('data-hex', window.Color.hexDeFilamento(f));
                 sel.appendChild(opt);
             });
             sel.value = currentVal; // restaurar si existe
@@ -96,7 +98,7 @@ function initFilamentos() {
             '  <td><div class="celda"><select data-campo="tipo">' +
                  TIPOS.map(t => '<option' + (t === f.tipo ? ' selected' : '') + '>' + t + '</option>').join('') +
             '  </select></div></td>' +
-            '  <td><div class="celda"><input type="text" data-campo="color" value="' + escapar(f.color) + '"></div></td>' +
+            '  <td><div class="celda celda-color"><input type="text" data-campo="color" value="' + escapar(f.color) + '"></div></td>' +
             '  <td><div class="celda"><input type="number" min="0" step="0.01" data-campo="precio" value="' + escapar(f.precio) + '"></div></td>' +
             '  <td><div class="celda"><select data-campo="moneda">' +
                  ['COP', 'USD'].map(m => '<option' + (m === (f.moneda || 'COP') ? ' selected' : '') + '>' + m + '</option>').join('') +
@@ -104,6 +106,36 @@ function initFilamentos() {
             '  <td><button class="tabla-borrar" title="Eliminar"><i class="bi bi-trash"></i></button></td>' +
             '</tr>'
         )).join('');
+
+        // El cuadrito de color de cada fila, delante del nombre
+        cuerpo.querySelectorAll('tr').forEach(fila => {
+            const id = fila.getAttribute('data-id');
+            const celda = fila.querySelector('.celda-color');
+            const selector = window.Color.crearSelectorColor({
+                leerHex: () => {
+                    const fil = state.filamentosGuardados.find(x => x.id === id);
+                    if (!fil) return '';
+                    // Mientras se reescribe el nombre, el cuadrito hace caso a lo
+                    // que hay en la casilla, que aún no ha llegado a los datos.
+                    if (fil.hex) return window.Color.hexDeFilamento(fil);
+                    return window.Color.hexDeNombre(celda.querySelector('input').value);
+                },
+                alElegir: (hex, nombre) => {
+                    const fil = state.filamentosGuardados.find(x => x.id === id);
+                    if (!fil) return;
+                    fil.hex = hex;
+                    if (nombre) {
+                        fil.color = nombre;
+                        celda.querySelector('input').value = nombre;
+                    }
+                    saveFilamentosLocal();
+                    renderFilamentosGuardados();
+                }
+            });
+            celda.insertBefore(selector, celda.firstChild);
+            // Si reescribe el nombre a mano, el cuadrito lo sigue
+            celda.querySelector('input').addEventListener('input', () => selector.refrescar());
+        });
 
         cuerpo.querySelectorAll('[data-campo]').forEach(campo => {
             campo.addEventListener('change', () => {
@@ -169,6 +201,23 @@ function initFilamentos() {
         renderFilamentosGuardados();
     }
 
+    // El cuadrito del formulario de alta. Mientras no se elija nada, enseña el
+    // color que se deduce de lo que se vaya escribiendo en el nombre.
+    let hexNuevo = '';
+    let selectorNuevo = null;
+    const campoColor = document.getElementById('filColorCampo');
+    if (campoColor && els.filColor) {
+        selectorNuevo = window.Color.crearSelectorColor({
+            leerHex: () => hexNuevo || window.Color.hexDeNombre(els.filColor.value),
+            alElegir: (hex, nombre) => {
+                hexNuevo = hex;
+                if (nombre) els.filColor.value = nombre;
+            }
+        });
+        campoColor.insertBefore(selectorNuevo, els.filColor);
+        els.filColor.addEventListener('input', () => selectorNuevo.refrescar());
+    }
+
     if(els.btnSaveFilamento) {
         els.btnSaveFilamento.addEventListener('click', () => {
             const marca = els.filMarca.value.trim();
@@ -183,12 +232,17 @@ function initFilamentos() {
             }
 
             const id = 'fil_' + Date.now();
-            state.filamentosGuardados.push({ id, marca, color, tipo, precio, moneda });
+            // Se guarda el color que se veía en el cuadrito, lo hubiera elegido
+            // a mano o deducido del nombre, para que no cambie después.
+            const hex = hexNuevo || window.Color.hexDeNombre(color);
+            state.filamentosGuardados.push({ id, marca, color, hex, tipo, precio, moneda });
             
             // Limpiar
             els.filMarca.value = '';
             els.filColor.value = '';
             els.filPrecio.value = '';
+            hexNuevo = '';
+            if (selectorNuevo) selectorNuevo.refrescar();
             
             saveFilamentosLocal();
             renderFilamentosGuardados();
@@ -226,6 +280,7 @@ function initFilamentos() {
                 el.addEventListener('change', () => { if(typeof calculate === 'function') calculate(); });
             });
 
+            window.crearCombobox(row.querySelector('.fil-extra-select'), '-- Seleccione un filamento --', true);
             renderFilamentosGuardados(); // poblates the new select
         });
     }
@@ -265,6 +320,7 @@ function initFilamentos() {
             el.addEventListener('input', () => { if(typeof calculate === 'function') calculate(); });
             el.addEventListener('change', () => { if(typeof calculate === 'function') calculate(); });
         });
+        window.crearCombobox(row.querySelector('.fil-extra-select'), '-- Seleccione un filamento --', true);
         renderFilamentosGuardados(); // puebla el select con los filamentos disponibles
         // Establecer valores después de que el select esté poblado
         const resolvedId = window.resolveFilamentoId(idFilamento);

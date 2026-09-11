@@ -160,7 +160,7 @@ def save_window_state(st):
 #   - El EJECUTABLE (esta parte en Python): son ~34 MB. Solo se avisa; el usuario
 #     decide con un botón y la app se reinicia sola.
 APP_VERSION = '1.0.5'   # versión del .exe
-WEB_VERSION = '1.1.0'   # versión de la interfaz que viene dentro del .exe
+WEB_VERSION = '1.2.0'   # versión de la interfaz que viene dentro del .exe
 
 REPO = 'samechp/calculadora-3d'
 VERSION_URL = 'https://raw.githubusercontent.com/{}/main/version.json'.format(REPO)

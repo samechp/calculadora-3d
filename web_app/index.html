@@ -84,7 +84,9 @@
                             </div>
                             <div class="input-group">
                                 <label>Color</label>
-                                <input type="text" id="filColor" placeholder="Ej: Rojo">
+                                <div class="campo-color" id="filColorCampo">
+                                    <input type="text" id="filColor" placeholder="Ej: Rojo">
+                                </div>
                             </div>
                             <div class="input-group">
                                 <label>Tipo</label>
@@ -752,6 +754,12 @@
                         <label for="precioUnitarioManual">Precio unitario personalizado (Opcional)</label>
                         <input type="number" id="precioUnitarioManual" min="0" step="0.01" placeholder="Ej: 700">
                     </div>
+                    <div class="input-group col-entera">
+                        <label class="label-check">
+                            <input type="checkbox" id="checkSinSobrantes">
+                            Imprimir solo las unidades necesarias (sin sobrantes)
+                        </label>
+                    </div>
                 </div>
 
                 <div class="margin-section">
@@ -807,6 +815,10 @@
                         <div class="result-item" id="containerUnidadesSobrantes" style="display:none;">
                             <span>Unidades sobrantes:</span>
                             <span class="val bobina-warn" id="resUnidadesSobrantes">—</span>
+                        </div>
+                        <div class="result-item" id="containerUltimaCama" style="display:none;">
+                            <span>Última cama (incompleta):</span>
+                            <span class="val" id="resUltimaCama">—</span>
                         </div>
                         <hr>
                         <div class="result-item">
@@ -1047,6 +1059,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="exports.js"></script>
     
+    <script src="color.js"></script>
     <script src="filamentos_logic.js"></script>
     <script src="app.js"></script>
     <script src="panel.js"></script>

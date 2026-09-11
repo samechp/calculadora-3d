@@ -9,14 +9,17 @@ const norm = (s) => (s || '').toString().toLowerCase().normalize('NFD').replace(
 const esc = (s) => (s || '').toString()
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-function crear(select, textoVacio) {
-    if (!select || select._comboListo) return;
+// "conColor" enciende el cuadrito de color: la opción lo saca de su atributo
+// data-hex, así que quien rellena el <select> decide si hay color o no.
+function crear(select, textoVacio, conColor) {
+    if (!select || select._comboListo) return select && select._combo;
     select._comboListo = true;
 
     const combo = document.createElement('div');
-    combo.className = 'piece-combo';
+    combo.className = 'piece-combo' + (conColor ? ' con-color' : '');
     combo.innerHTML =
         '<div class="piece-combo-control">' +
+        (conColor ? '  <span class="piece-combo-muestra"></span>' : '') +
         '  <input type="text" class="piece-combo-input" role="combobox" autocomplete="off"' +
         '         aria-expanded="false" aria-autocomplete="list" placeholder="' + esc(textoVacio) + '">' +
         '  <span class="piece-combo-count"></span>' +
@@ -31,6 +34,7 @@ function crear(select, textoVacio) {
     select.setAttribute('aria-hidden', 'true');
 
     const input   = combo.querySelector('.piece-combo-input');
+    const muestra = combo.querySelector('.piece-combo-muestra');
     const lista   = combo.querySelector('.piece-combo-list');
     const cuenta  = combo.querySelector('.piece-combo-count');
     const limpiar = combo.querySelector('.combo-limpiar');
@@ -42,7 +46,12 @@ function crear(select, textoVacio) {
     function opciones() {
         return Array.from(select.options)
             .filter(o => o.value !== '')
-            .map(o => ({ valor: o.value, texto: o.textContent }));
+            .map(o => ({ valor: o.value, texto: o.textContent, hex: o.getAttribute('data-hex') || '' }));
+    }
+
+    function hexSeleccionado() {
+        const o = select.options[select.selectedIndex];
+        return (o && o.value) ? (o.getAttribute('data-hex') || '') : '';
     }
 
     function seleccionada() {
@@ -78,8 +87,9 @@ function crear(select, textoVacio) {
             const clases = ['piece-combo-option'];
             if (i === activo) clases.push('active');
             if (o.valor === select.value) clases.push('selected');
+            const cuadro = (conColor && window.Color) ? window.Color.muestraHTML(o.hex) : '';
             return '<div class="' + clases.join(' ') + '" role="option" data-valor="' + esc(o.valor) + '">' +
-                   '<span class="piece-combo-option-name">' + resaltar(o.texto) + '</span></div>';
+                   cuadro + '<span class="piece-combo-option-name">' + resaltar(o.texto) + '</span></div>';
         }).join('');
 
         const act = lista.querySelector('.piece-combo-option.active');
@@ -89,6 +99,7 @@ function crear(select, textoVacio) {
     function sincronizar() {
         combo.classList.toggle('has-value', !!select.value);
         if (!abierto) input.value = seleccionada();
+        if (muestra && window.Color) muestra.innerHTML = window.Color.muestraHTML(hexSeleccionado());
     }
 
     function abrir() {
@@ -165,12 +176,17 @@ function crear(select, textoVacio) {
     select.addEventListener('change', sincronizar);
 
     sincronizar();
+    select._combo = combo;
+    return combo;
 }
 
 function iniciar() {
     crear(document.getElementById('projectSelect'), '-- Cargar Proyecto Guardado --');
     crear(document.getElementById('megaProjectSelect'), '-- Cargar Mega Proyecto --');
     crear(document.getElementById('subProjectSelect'), '-- Proyectos Guardados --');
+    // El material principal de la pieza: con cuadrito de color, que es lo que
+    // se busca de un vistazo al elegir filamento.
+    crear(document.getElementById('mainFilamentoSelect'), '-- Seleccione un filamento --', true);
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);

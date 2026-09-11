@@ -104,12 +104,15 @@ const els = {
     unidadesPedido: document.getElementById('unidadesPedido'),
     unidadesCama: document.getElementById('unidadesCama'),
     precioUnitarioManual: document.getElementById('precioUnitarioManual'),
+    checkSinSobrantes: document.getElementById('checkSinSobrantes'),
     projectResults: document.getElementById('projectResults'),
     resCamas: document.getElementById('resCamas'),
     resUnidadesCamaProyecto: document.getElementById('resUnidadesCamaProyecto'),
     resUnidadesProducidas: document.getElementById('resUnidadesProducidas'),
     containerUnidadesSobrantes: document.getElementById('containerUnidadesSobrantes'),
     resUnidadesSobrantes: document.getElementById('resUnidadesSobrantes'),
+    containerUltimaCama: document.getElementById('containerUltimaCama'),
+    resUltimaCama: document.getElementById('resUltimaCama'),
     resHorasTotales: document.getElementById('resHorasTotales'),
     resTiempoProduccionProyecto: document.getElementById('resTiempoProduccionProyecto'),
     resGramosTotales: document.getElementById('resGramosTotales'),
@@ -526,12 +529,15 @@ function createParteCard(container, data) {
             const opt = document.createElement('option');
             opt.value = f.id;
             opt.text = `${f.marca} ${f.tipo} - ${f.color} ($${f.precio})`;
+            opt.setAttribute('data-hex', window.Color.hexDeFilamento(f));
             select.appendChild(opt);
         });
     }
     if (data.filamentoId) {
         select.value = data.filamentoId;
     }
+    // Desplegable con buscador y cuadrito de color, igual que el principal
+    if (window.crearCombobox) window.crearCombobox(select, '-- Seleccionar --', true);
 
     card.querySelector('.btn-remove-parte').addEventListener('click', () => {
         card.remove();
@@ -871,24 +877,37 @@ function calculateProject() {
     }
 
     const camas = Math.ceil(unidades / unidadesCama);
-    const horasTotales = camas * (lastCalcResults['_horas_impresion'] || 0);
-    const gramosTotales = camas * (lastCalcResults['_gramos_input'] || 0);
-    
-    const tiempoEstProyecto = (camas * (lastCalcResults['_tiempo_prod_cama_h'] || 0)) + (lastCalcResults['_hInv'] || 0);
+
+    // "Sin sobrantes": la última cama se llena solo con las piezas que faltan, no
+    // completa. Se siguen montando las mismas camas, pero la última gasta menos
+    // filamento y menos horas, así que los costos que dependen de la impresión se
+    // cobran por camas "equivalentes" (ej: 50 de a 39 = 1,28 camas) en vez de 2.
+    const sinSobrantes = els.checkSinSobrantes && els.checkSinSobrantes.checked;
+    const camasEquivalentes = sinSobrantes ? (unidades / unidadesCama) : camas;
+
+    const horasTotales = camasEquivalentes * (lastCalcResults['_horas_impresion'] || 0);
+    const gramosTotales = camasEquivalentes * (lastCalcResults['_gramos_input'] || 0);
+
+    // El calentamiento de la máquina y el tiempo de operario se pagan igual en la
+    // cama incompleta: hay que montarla y atenderla como cualquier otra.
+    const horasFijasCama = (lastCalcResults['_tiempo_prod_cama_h'] || 0) - (lastCalcResults['_horas_impresion'] || 0);
+    const tiempoEstProyecto = horasTotales + (camas * horasFijasCama) + (lastCalcResults['_hInv'] || 0);
     
     // Escalar costos POR CAMA (no por unidad)
-    const matProyecto = (lastCalcResults['_matCamaCOP'] || 0) * camas;
-    const luzProyecto = (lastCalcResults['_luzCamaCOP'] || 0) * camas;
-    const despProyecto = (lastCalcResults['_despCamaCOP'] || 0) * camas;
-    const mErrProyecto = (lastCalcResults['_mErrCamaCOP'] || 0) * camas;
+    const matProyecto = (lastCalcResults['_matCamaCOP'] || 0) * camasEquivalentes;
+    const luzProyecto = (lastCalcResults['_luzCamaCOP'] || 0) * camasEquivalentes;
+    const despProyecto = (lastCalcResults['_despCamaCOP'] || 0) * camasEquivalentes;
+    const mErrProyecto = (lastCalcResults['_mErrCamaCOP'] || 0) * camasEquivalentes;
     
-    const costoMaterialesProyecto = (lastCalcResults['_costo_base_cama_cop'] || 0) * camas;
-    const insumosExtraProyecto = (lastCalcResults['_insumos_extra_cama_cop'] || 0) * camas;
+    const costoMaterialesProyecto = (lastCalcResults['_costo_base_cama_cop'] || 0) * camasEquivalentes;
+    const insumosExtraProyecto = (lastCalcResults['_insumos_extra_cama_cop'] || 0) * camasEquivalentes;
     const manoObraProyecto = ((lastCalcResults['_c_mano_obra_op'] || 0) * camas) + (lastCalcResults['_c_mano_obra_prep'] || 0);
 
     const mGanProyecto = parseFloat(els.margenGananciaProyecto.value) || 1;
-    const cobrarVariable = ((lastCalcResults['_costo_base_cama_cop'] || 0) * mGanProyecto) + (lastCalcResults['_c_mano_obra_op'] || 0) + (lastCalcResults['_insumos_extra_cobrar_cama'] || 0);
-    const totalCobrarRawTotal = (cobrarVariable * camas) + (lastCalcResults['_c_mano_obra_prep'] || 0);
+    const cobrarPorCama = ((lastCalcResults['_costo_base_cama_cop'] || 0) * mGanProyecto) + (lastCalcResults['_insumos_extra_cobrar_cama'] || 0);
+    const totalCobrarRawTotal = (cobrarPorCama * camasEquivalentes)
+        + ((lastCalcResults['_c_mano_obra_op'] || 0) * camas)
+        + (lastCalcResults['_c_mano_obra_prep'] || 0);
     
     let totalCobrarTotal = applyRedondeo(totalCobrarRawTotal, els.redondeoModeProyecto.value);
     
@@ -902,8 +921,10 @@ function calculateProject() {
     const gananciaProyecto = totalCobrarTotal - costoMaterialesProyecto - insumosExtraProyecto;
 
     // Producción por cama
-    const unidadesProducidas = camas * unidadesCama;
+    const unidadesProducidas = sinSobrantes ? unidades : (camas * unidadesCama);
     const unidadesSobrantes = unidadesProducidas - unidades;
+    // Piezas que van en la última cama cuando queda a medias
+    const unidadesUltimaCama = unidades - ((camas - 1) * unidadesCama);
 
     els.resUnidadesCamaProyecto.innerText = unidadesCama.toLocaleString('es-CO');
     els.resCamas.innerText = camas.toLocaleString('es-CO');
@@ -913,6 +934,14 @@ function calculateProject() {
         els.resUnidadesSobrantes.innerText = unidadesSobrantes.toLocaleString('es-CO');
     } else {
         els.containerUnidadesSobrantes.style.display = 'none';
+    }
+    if (els.containerUltimaCama) {
+        if (sinSobrantes && unidadesUltimaCama < unidadesCama) {
+            els.containerUltimaCama.style.display = 'flex';
+            els.resUltimaCama.innerText = unidadesUltimaCama.toLocaleString('es-CO') + ' de ' + unidadesCama.toLocaleString('es-CO');
+        } else {
+            els.containerUltimaCama.style.display = 'none';
+        }
     }
     const _pct = lastCalcResults['_mErrPct'] || 0;
     const _nota = (txt) => txt + (_pct > 0 ? ' <span class="anotacion">+' + _pct + '%</span>' : '');
@@ -959,7 +988,8 @@ function calculateProject() {
 
     // Guardar datos calculados del proyecto para guardar/exportar
     state._lastProjectCalc = {
-        camas, horasTotales, gramosTotales, 
+        camas, camasEquivalentes, sinSobrantes, unidadesProducidas, unidadesSobrantes,
+        horasTotales, gramosTotales, 
         matProyecto, luzProyecto, despProyecto, mErrProyecto,
         costoMaterialesProyecto, insumosExtraProyecto, manoObraProyecto,
         gananciaProyecto, costoPorUnidad,
@@ -1210,6 +1240,7 @@ function getProjectData() {
         pieza: state.currentPiece || null,
         pieceData: getPieceData(),
         unidadesPedido: els.unidadesPedido.value,
+        sinSobrantes: els.checkSinSobrantes ? els.checkSinSobrantes.checked : false,
         precioUnitarioManual: els.precioUnitarioManual.value,
         margenGananciaProyecto: els.margenGananciaProyecto.value,
         redondeoModeProyecto: els.redondeoModeProyecto.value,
@@ -1247,6 +1278,7 @@ els.projectSelect.addEventListener('change', (e) => {
         // Cargar datos de pieza del proyecto
         if (proj.pieceData) loadPieceData(proj.pieceData);
         els.unidadesPedido.value = proj.unidadesPedido || '';
+        if (els.checkSinSobrantes) els.checkSinSobrantes.checked = !!proj.sinSobrantes;
         els.precioUnitarioManual.value = proj.precioUnitarioManual || '';
         if (proj.margenGananciaProyecto) { els.margenGananciaProyecto.value = proj.margenGananciaProyecto; els.margenGananciaProyectoSlider.value = proj.margenGananciaProyecto; }
         if (proj.redondeoModeProyecto) els.redondeoModeProyecto.value = proj.redondeoModeProyecto;
@@ -1863,7 +1895,7 @@ if (els.btnExportBom) {
         // Agrupar por filamento
         const grupos = {};
         lista.forEach(item => {
-            const key = `${item.ref.marca} ${item.ref.tipo} - ${item.ref.color}`;
+            const key = `${item.ref.marca} ${item.ref.tipo} - ${item.ref.color}${window.Color.textoColor(item.ref)}`;
             grupos[key] = (grupos[key] || 0) + item.gramos;
         });
         
@@ -1893,7 +1925,7 @@ if (els.btnExportBom) {
 // Helper: resolver nombre de filamento por ID, con fallback al label guardado
 function resolveFilamentoLabel(id, storedLabel) {
     const f = state.filamentosGuardados.find(x => x.id === id);
-    if (f) return `${f.marca} ${f.tipo} - ${f.color}`;
+    if (f) return `${f.marca} ${f.tipo} - ${f.color}${window.Color.textoColor(f)}`;
     return storedLabel || 'Desconocido';
 }
 
@@ -1937,11 +1969,12 @@ if (btnExportProjectBom) {
         const nombre = state.currentProject || state.currentPiece || 'proyecto';
         // Leer desde pieceData guardada (no depende del dropdown actual)
         const pieceData = state.currentPiece ? state.pieces[state.currentPiece] : null;
-        const grupos = buildMaterialesFromPieceData(pieceData, p.camas);
+        const camasMaterial = (typeof p.camasEquivalentes === 'number') ? p.camasEquivalentes : p.camas;
+        const grupos = buildMaterialesFromPieceData(pieceData, camasMaterial);
 
         let report = `=== LISTA DE MATERIALES - PROYECTO: ${nombre.toUpperCase()} ===\n`;
         report += `Fecha: ${new Date().toLocaleDateString('es-CO')}\n`;
-        report += `Unidades: ${p.unidades} | Camas: ${p.camas}\n\n`;
+        report += `Unidades: ${p.unidades} | Camas: ${p.camas}${p.sinSobrantes ? ' (la ultima va incompleta, sin sobrantes)' : ''}\n\n`;
         report += `MATERIALES TOTALES (${p.camas} camas):\n`;
         Object.entries(grupos).forEach(([mat, g]) => {
             report += `  - ${mat}: ${g.toFixed(1)} g\n`;
@@ -1978,7 +2011,8 @@ if (btnExportMegaBom) {
             const camas = item.resultados ? item.resultados.camas : 0;
             if (!pieceData) return;
             report += `--- ${item._nombre} (${item.unidadesPedido} u, ${camas} camas) ---\n`;
-            const grupos = buildMaterialesFromPieceData(pieceData, camas);
+            const camasMaterial = (item.resultados && typeof item.resultados.camasEquivalentes === 'number') ? item.resultados.camasEquivalentes : camas;
+            const grupos = buildMaterialesFromPieceData(pieceData, camasMaterial);
             Object.entries(grupos).forEach(([mat, g]) => {
                 report += `  - ${mat}: ${g.toFixed(1)} g\n`;
                 gruposGlobal[mat] = (gruposGlobal[mat] || 0) + g;

@@ -1,6 +1,6 @@
 {
   "app_version": "1.0.5",
-  "web_version": "1.1.0",
+  "web_version": "1.2.0",
   "web_files": [
     "index.html",
     "style.css",
@@ -14,10 +14,11 @@
     "ayuda.js",
     "ajustes.js",
     "combobox.js",
+    "color.js",
     "dialogos.js",
     "actualizacion.js",
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Interfaz nueva: el costo y el precio siempre a la vista, y ahora se avisa que numeros infla el margen de error"
+  "notas": "Selector de color de filamentos, interfaz renovada y opcion de imprimir solo lo necesario sin sobrantes"
 }
