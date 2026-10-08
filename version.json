@@ -1,6 +1,6 @@
 {
   "app_version": "1.0.6",
-  "web_version": "1.2.2",
+  "web_version": "1.2.3",
   "web_files": [
     "index.html",
     "style.css",
@@ -20,5 +20,5 @@
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "El desgaste suma el precio y la vida util de la impresora, y el membrete de la empresa sale centrado en los PDF"
+  "notas": "Se quitan los campos de precio y vida util de la impresora; el desgaste vuelve a contar solo los repuestos"
 }

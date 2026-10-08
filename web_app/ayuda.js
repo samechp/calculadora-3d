@@ -26,12 +26,6 @@ const AYUDA_CAMPOS = {
     precioRepuestos:
         'Cuánto te cuesta el juego de repuestos/mantenimiento que harías al cumplir las horas de "Desgaste Máquina". ' +
         'No es un gasto por pieza: se reparte entre todas las horas de vida.',
-    precioImpresora:
-        'Lo que te costó la impresora. Se reparte entre su "Vida útil" para que cada impresión pague un pedacito de la máquina: ' +
-        '(precio impresora ÷ vida útil) × horas de impresión. Si lo dejas vacío, el desgaste solo cuenta los repuestos.',
-    vidaUtilImpresora:
-        'Cuántas horas de impresión calculas que te dura la impresora antes de reemplazarla. Una de escritorio ronda las 3.000-5.000 horas. ' +
-        'Se usa junto con "Precio de la Impresora".',
     manoObraHora:
         'Cuánto vale una hora de tu trabajo. Se cobra sobre el tiempo de modelado/preparación y el tiempo de operario, ' +
         'NO sobre las horas que la impresora trabaja sola.',
@@ -159,7 +153,7 @@ Object.keys(EQUIVALENTES_CAPAS).forEach(k => {
 const AYUDA_RESULTADOS = {
     resMaterial: 'Lo que cuesta el filamento gastado por unidad: gramos × precio del kilo ÷ 1.000, dividido entre las unidades por cama.',
     resLuz: 'Costo de la energía eléctrica: (precio kWh × watts ÷ 1.000) × horas de impresión, repartido entre las unidades de la cama.',
-    resDesgaste: 'La parte de la impresora que se gasta en esta pieza: (precio repuestos ÷ horas de desgaste + precio impresora ÷ vida útil) × horas de impresión.',
+    resDesgaste: 'La parte del mantenimiento de la impresora que le toca a esta pieza: (precio repuestos ÷ horas de desgaste) × horas de impresión.',
     resError: 'El colchón por fallas: el % de margen de error aplicado sobre material + luz + desgaste.',
     resCostoTotal: 'Suma de material + luz + desgaste + margen de error. Es lo que te cuesta imprimir, SIN contar tu tiempo ni los insumos.',
     resInsumos: 'Costo real de los insumos extra (argollas, cajas, imanes, empaque...) que cargaste en la pestaña Insumos.',
