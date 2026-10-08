@@ -10,6 +10,7 @@ import subprocess
 import webbrowser
 import urllib.request
 from fpdf import FPDF
+from fpdf.enums import Align
 from openpyxl import Workbook
 import datetime
 
@@ -159,8 +160,8 @@ def save_window_state(st):
 #     plano y queda lista para el siguiente arranque.
 #   - El EJECUTABLE (esta parte en Python): son ~34 MB. Solo se avisa; el usuario
 #     decide con un botón y la app se reinicia sola.
-APP_VERSION = '1.0.5'   # versión del .exe
-WEB_VERSION = '1.2.1'   # versión de la interfaz que viene dentro del .exe
+APP_VERSION = '1.0.6'   # versión del .exe
+WEB_VERSION = '1.2.2'   # versión de la interfaz que viene dentro del .exe
 
 REPO = 'samechp/calculadora-3d'
 VERSION_URL = 'https://raw.githubusercontent.com/{}/main/version.json'.format(REPO)
@@ -663,6 +664,7 @@ class Api:
             return ''
 
         logo_temp = None
+        logo_puesto = False
         try:
             logo = emp.get('logo') or ''
             if logo.startswith('data:image'):
@@ -672,14 +674,16 @@ class Api:
                 fd, logo_temp = tempfile.mkstemp(suffix=ext, prefix='calc3d_logo_')
                 with os.fdopen(fd, 'wb') as f:
                     f.write(base64.b64decode(datos64))
-                pdf.image(logo_temp, x=10, y=8, h=18)
+                pdf.image(logo_temp, x=Align.C, y=8, h=18)
+                logo_puesto = True
         except Exception as e:
             print("No se pudo poner el logo en el PDF:", e)
 
         try:
-            pdf.set_xy(35, 10)
+            # Todo el membrete va centrado: el logo arriba y los datos debajo
+            pdf.set_xy(10, 28 if logo_puesto else 10)
             pdf.set_font("Arial", 'B', 13)
-            pdf.cell(0, 6, txt=_texto_pdf(emp.get('nombre', '')), ln=1)
+            pdf.cell(0, 6, txt=_texto_pdf(emp.get('nombre', '')), ln=1, align='C')
             pdf.set_font("Arial", size=9)
             renglones = []
             if emp.get('nit'):
@@ -690,8 +694,8 @@ class Api:
             if emp.get('direccion'):
                 renglones.append(emp['direccion'])
             for r in renglones:
-                pdf.set_x(35)
-                pdf.cell(0, 4.5, txt=_texto_pdf(r), ln=1)
+                pdf.set_x(10)
+                pdf.cell(0, 4.5, txt=_texto_pdf(r), ln=1, align='C')
 
             y = max(pdf.get_y(), 28)
             pdf.line(10, y + 1, 200, y + 1)
@@ -735,7 +739,7 @@ class Api:
             pdf.add_page()
             nota_pie = self._dibujar_empresa(pdf, empresa_json)
             pdf.set_font("Arial", 'B', 16)
-            pdf.cell(200, 10, txt=_texto_pdf("Cotización Impresión"), ln=1, align='C')
+            pdf.cell(0, 10, txt=_texto_pdf("Cotización Impresión"), ln=1, align='C')
             pdf.ln(10)
             pdf.set_font("Arial", size=12)
             date_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -827,7 +831,7 @@ class Api:
             pdf.add_page()
             nota_pie = self._dibujar_empresa(pdf, empresa_json)
             pdf.set_font("Arial", 'B', 16)
-            pdf.cell(200, 10, txt=_texto_pdf("Cotización de Proyecto 3D"), ln=1, align='C')
+            pdf.cell(0, 10, txt=_texto_pdf("Cotización de Proyecto 3D"), ln=1, align='C')
             pdf.ln(10)
             
             pdf.set_font("Arial", size=12)
@@ -915,7 +919,7 @@ class Api:
             nota_pie = self._dibujar_empresa(pdf, empresa_json)
             pdf.set_font("Arial", 'B', 16)
             nombre_proyecto = data.get('nombre', 'Mega Proyecto')
-            pdf.cell(200, 10, txt=_texto_pdf(f"Cotización - {nombre_proyecto}"), ln=1, align='C')
+            pdf.cell(0, 10, txt=_texto_pdf(f"Cotización - {nombre_proyecto}"), ln=1, align='C')
             pdf.ln(10)
             
             pdf.set_font("Arial", size=12)

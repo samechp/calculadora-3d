@@ -1,6 +1,6 @@
 {
-  "app_version": "1.0.5",
-  "web_version": "1.2.1",
+  "app_version": "1.0.6",
+  "web_version": "1.2.2",
   "web_files": [
     "index.html",
     "style.css",
@@ -20,5 +20,5 @@
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Filamento por color en pieza, proyecto y mega proyecto: gramos y bobinas de cada rollo"
+  "notas": "El desgaste suma el precio y la vida util de la impresora, y el membrete de la empresa sale centrado en los PDF"
 }

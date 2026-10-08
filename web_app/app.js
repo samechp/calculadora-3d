@@ -38,6 +38,9 @@ const els = {
     desgasteMaquina: document.getElementById('desgasteMaquina'),
     precioRepuestos: document.getElementById('precioRepuestos'),
     monedaRepuestos: document.getElementById('monedaRepuestos'),
+    precioImpresora: document.getElementById('precioImpresora'),
+    monedaImpresora: document.getElementById('monedaImpresora'),
+    vidaUtilImpresora: document.getElementById('vidaUtilImpresora'),
     manoObraHora: document.getElementById('manoObraHora'),
     margenError: document.getElementById('margenError'),
     
@@ -264,6 +267,7 @@ function revisarDatosFaltantes() {
     if (vacio('consumoWatts')) faltan.push('consumo en watts');
     if (vacio('manoObraHora')) faltan.push('mano de obra por hora');
     if (vacio('desgasteMaquina') || vacio('precioRepuestos')) faltan.push('desgaste de máquina');
+    if (vacio('precioImpresora') || vacio('vidaUtilImpresora')) faltan.push('precio y vida útil de la impresora');
 
     let aviso = document.getElementById('avisoDatosFaltantes');
     if (!faltan.length) {
@@ -315,6 +319,7 @@ function formatTime(totalHours) {
 function checkDolarVisibility() {
     let usesDolar = (els.monedaFilamento.value === 'USD') || 
                       (els.monedaRepuestos.value === 'USD') ||
+                      (els.monedaImpresora.value === 'USD') ||
                       (els.monedaInsumosACobrar.value === 'USD');
     // Check dynamic insumo currency selectors
     document.querySelectorAll('.insumo-moneda-select').forEach(sel => {
@@ -635,6 +640,8 @@ function calculate() {
     
     const pKgCOP = normalizeToCOP(val(els.precioKg), els.monedaFilamento);
     const pRepCOP = normalizeToCOP(val(els.precioRepuestos), els.monedaRepuestos);
+    const pImpresoraCOP = normalizeToCOP(val(els.precioImpresora), els.monedaImpresora);
+    const vidaImpresora = val(els.vidaUtilImpresora);
     const insExCOP = getInsumosTotalCOP();
     
     let rawInsumosCobrar = parseFloat(els.insumosACobrar.value);
@@ -719,7 +726,11 @@ function calculate() {
     // Recalcular gFil total por si acaso (sumatoria total)
     gFil = _listaMaterialesUnidad.reduce((sum, item) => sum + item.gramos, 0);
     const cLuzCamaCOP = ((pKwh * cWatts) / 1000) * hImp;
-    const cDesgasteCamaCOP = (pRepCOP / dMaq) * hImp;
+    // Desgaste por hora = repuestos repartidos en sus horas + la impresora repartida en su vida útil.
+    // Si no se llenó el precio o la vida útil de la impresora, solo cuentan los repuestos.
+    const desgasteRepuestosHora = pRepCOP / dMaq;
+    const desgasteImpresoraHora = (pImpresoraCOP > 0 && vidaImpresora > 0) ? pImpresoraCOP / vidaImpresora : 0;
+    const cDesgasteCamaCOP = (desgasteRepuestosHora + desgasteImpresoraHora) * hImp;
     const cErrorCamaCOP = (cMaterialCamaCOP + cLuzCamaCOP + cDesgasteCamaCOP) * (mErr / 100);
     // Buffer de peor escenario: aplicar margen de error a tiempo y gramos
     const errorFactor = 1 + (mErr / 100);
@@ -1965,6 +1976,8 @@ function getFormData() {
         precioKwh: els.precioKwh.value, consumoWatts: els.consumoWatts.value,
         desgasteMaquina: els.desgasteMaquina.value, precioRepuestos: els.precioRepuestos.value,
         monedaRepuestos: els.monedaRepuestos.value, manoObraHora: els.manoObraHora.value,
+        precioImpresora: els.precioImpresora.value, monedaImpresora: els.monedaImpresora.value,
+        vidaUtilImpresora: els.vidaUtilImpresora.value,
         margenError: els.margenError.value, precioDolar: els.precioDolar.value
     };
 }
@@ -1975,6 +1988,10 @@ function loadFormData(data) {
     els.precioKwh.value = data.precioKwh || ''; els.consumoWatts.value = data.consumoWatts || '';
     els.desgasteMaquina.value = data.desgasteMaquina || ''; els.precioRepuestos.value = data.precioRepuestos || '';
     if(data.monedaRepuestos) els.monedaRepuestos.value = data.monedaRepuestos;
+    // Los perfiles guardados antes de que existiera la impresora no traen estos campos
+    els.precioImpresora.value = data.precioImpresora || '';
+    els.monedaImpresora.value = data.monedaImpresora || 'COP';
+    els.vidaUtilImpresora.value = data.vidaUtilImpresora || '';
     els.manoObraHora.value = data.manoObraHora || ''; els.margenError.value = data.margenError || '';
     els.precioDolar.value = data.precioDolar || '';
     calculate();
@@ -1984,6 +2001,7 @@ function clearFormData() {
     els.precioKg.value = ''; els.monedaFilamento.value = 'COP';
     els.precioKwh.value = ''; els.consumoWatts.value = '';
     els.desgasteMaquina.value = ''; els.precioRepuestos.value = ''; els.monedaRepuestos.value = 'COP';
+    els.precioImpresora.value = ''; els.monedaImpresora.value = 'COP'; els.vidaUtilImpresora.value = '';
     els.manoObraHora.value = ''; els.margenError.value = '';
     els.profileSelect.value = ''; state.currentProfile = null;
     calculate();
@@ -2050,6 +2068,7 @@ function MegaProjectSync() {
 els.toggleMonedaResultados.addEventListener('change', () => { calculate(); calculateMegaProject(); });
 els.monedaFilamento.addEventListener('change', calculate);
 els.monedaRepuestos.addEventListener('change', calculate);
+els.monedaImpresora.addEventListener('change', calculate);
 els.monedaInsumosACobrar.addEventListener('change', calculate);
 els.unidadesPedido.addEventListener('input', calculateProject);
 els.precioUnitarioManual.addEventListener('input', calculateProject);
