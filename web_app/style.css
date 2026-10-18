@@ -1665,4 +1665,13 @@ button.muestra-color:focus-visible { outline: none; border-color: var(--primary)
 .fila-material .piece-combo,
 .fil-extra-row .piece-combo { flex: 2; min-width: 150px; margin-bottom: 0; }
 .parte-extra-card .piece-combo { margin-bottom: 0; }
+
+/* Varios filamentos dentro de una parte extra: misma fila que el principal */
+.parte-filamentos-extra { margin-top: 6px; }
+.parte-fil-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.parte-fil-row input { flex: 1; min-width: 80px; }
+.parte-fil-row .btn-remove-extra-row {
+    background: none; border: none; color: var(--danger); cursor: pointer; padding: 0 4px;
+}
+.parte-extra-card .btn-add-parte-fil { margin-top: 6px; align-self: flex-start; }
 .tabla-filamentos .celda-color { gap: 6px; }

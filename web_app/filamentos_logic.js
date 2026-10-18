@@ -18,7 +18,7 @@ function initFilamentos() {
         // Refrescar selects
         const selects = [];
         if (els.mainFilamentoSelect) selects.push(els.mainFilamentoSelect);
-        document.querySelectorAll('.fil-extra-select').forEach(el => selects.push(el));
+        document.querySelectorAll('.fil-extra-select, .parte-filamento, .parte-fil-select').forEach(el => selects.push(el));
         
         selects.forEach(sel => {
             if(!sel) return;

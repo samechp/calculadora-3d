@@ -220,7 +220,8 @@ const AYUDA_SECCIONES = {
         'así cada pieza calcula con el precio del material que realmente usaste.',
     '#tabPartes .tab-section-header > span':
         'Para piezas que se arman con varias partes que NO caben en la misma cama (ej: cuerpo y tapa). ' +
-        'Cada parte suma sus horas y gramos, y agrega otra cama, así que el tiempo de operario y de calentamiento se multiplica.',
+        'Cada parte suma sus horas y gramos, y agrega otra cama, así que el tiempo de operario y de calentamiento se multiplica. ' +
+        'Si una parte lleva varios colores, usa "Añadir otro filamento" dentro de esa parte.',
     '#tabInsumos .tab-section-header > span':
         'Todo lo que no es filamento pero va en el producto o en el envío: argollas, imanes, cajas, bolsas, tornillos, pintura. ' +
         'Se suman al costo de producción y puedes decidir aparte cuánto cobrarlos.',

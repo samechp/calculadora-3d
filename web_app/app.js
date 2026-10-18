@@ -507,36 +507,31 @@ function createParteCard(container, data) {
                     <input type="number" class="parte-min" min="0" max="59" step="1" placeholder="Min" value="${data.minutos || ''}" style="flex: 1; border-radius: 0.375rem;">
                 </div>
             </div>
-            <div class="input-group">
-                <label>Gramos</label>
-                <input type="number" class="parte-gramos" min="0" step="1" value="${data.gramos || ''}">
-            </div>
-            <div class="input-group">
-                <label>Filamento</label>
-                <select class="parte-filamento">
-                    <option value="">-- Seleccionar --</option>
-                </select>
+            <div class="input-group col-entera">
+                <label>Filamento y gramos</label>
+                <div class="fila-material">
+                    <select class="parte-filamento"></select>
+                    <input type="number" class="parte-gramos" min="0" step="1" placeholder="Gramos" value="${data.gramos || ''}">
+                </div>
+                <div class="parte-filamentos-extra"></div>
+                <button type="button" class="btn btn-outline btn-suelto btn-add-parte-fil"><i class="bi bi-plus-lg"></i> Añadir otro filamento</button>
             </div>
         </div>
     `;
     container.appendChild(card);
 
-    // Populate select with filamentosGuardados
     const select = card.querySelector('.parte-filamento');
-    if (state.filamentosGuardados) {
-        state.filamentosGuardados.forEach(f => {
-            const opt = document.createElement('option');
-            opt.value = f.id;
-            opt.text = `${f.marca} ${f.tipo} - ${f.color} ($${f.precio})`;
-            opt.setAttribute('data-hex', window.Color.hexDeFilamento(f));
-            select.appendChild(opt);
-        });
-    }
-    if (data.filamentoId) {
-        select.value = data.filamentoId;
-    }
+    llenarSelectFilamentos(select);
+    // Las piezas guardadas antes usaban "filamentoId"
+    select.value = resolverIdParte(data.idFilamento || data.filamentoId);
     // Desplegable con buscador y cuadrito de color, igual que el principal
-    if (window.crearCombobox) window.crearCombobox(select, '-- Seleccionar --', true);
+    if (window.crearCombobox) window.crearCombobox(select, '-- Seleccione un filamento --', true);
+
+    (data.filamentosExtra || []).forEach(it => agregarFilamentoAParte(card, it.idFilamento, it.gramos));
+
+    card.querySelector('.btn-add-parte-fil').addEventListener('click', () => {
+        agregarFilamentoAParte(card, '', '');
+    });
 
     card.querySelector('.btn-remove-parte').addEventListener('click', () => {
         card.remove();
@@ -544,7 +539,7 @@ function createParteCard(container, data) {
         calculate();
     });
 
-    card.querySelectorAll('input, select').forEach(el => {
+    card.querySelectorAll('.parte-hrs, .parte-min, .parte-gramos, .parte-filamento').forEach(el => {
         el.addEventListener('input', calculate);
         el.addEventListener('change', calculate);
     });
@@ -552,17 +547,102 @@ function createParteCard(container, data) {
     return card;
 }
 
+// Llena un desplegable con los filamentos guardados (sin elegir ninguno)
+function llenarSelectFilamentos(select) {
+    select.innerHTML = '<option value="">-- Seleccione un filamento --</option>';
+    (state.filamentosGuardados || []).forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.id;
+        opt.text = `${f.marca} ${f.tipo} - ${f.color} ($${f.precio} ${f.moneda || 'COP'})`;
+        opt.setAttribute('data-hex', window.Color.hexDeFilamento(f));
+        select.appendChild(opt);
+    });
+}
+
+function resolverIdParte(id) {
+    return window.resolveFilamentoId ? window.resolveFilamentoId(id) : (id || '');
+}
+
+// Otro filamento dentro de la misma parte (ej: una tapa en dos colores)
+function agregarFilamentoAParte(card, idFilamento, gramos) {
+    const fila = document.createElement('div');
+    fila.className = 'fil-extra-row parte-fil-row';
+    fila.innerHTML = `
+        <select class="parte-fil-select"></select>
+        <input type="number" class="parte-fil-gramos" min="0" step="1" placeholder="Gramos">
+        <button type="button" class="btn-remove-extra-row" title="Quitar"><i class="bi bi-x-lg"></i></button>
+    `;
+    card.querySelector('.parte-filamentos-extra').appendChild(fila);
+
+    const select = fila.querySelector('.parte-fil-select');
+    llenarSelectFilamentos(select);
+    select.value = resolverIdParte(idFilamento);
+    fila.querySelector('.parte-fil-gramos').value = gramos || '';
+    if (window.crearCombobox) window.crearCombobox(select, '-- Seleccione un filamento --', true);
+
+    fila.querySelector('.btn-remove-extra-row').addEventListener('click', () => {
+        fila.remove();
+        calculate();
+    });
+    fila.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', calculate);
+        el.addEventListener('change', calculate);
+    });
+    return fila;
+}
+
+// Todos los filamentos de una parte: el primero y los que se hayan añadido
+function filamentosDeParte(card) {
+    const lista = [{
+        id: card.querySelector('.parte-filamento').value,
+        gramos: parseFloat(card.querySelector('.parte-gramos').value) || 0
+    }];
+    card.querySelectorAll('.parte-fil-row').forEach(fila => {
+        lista.push({
+            id: fila.querySelector('.parte-fil-select').value,
+            gramos: parseFloat(fila.querySelector('.parte-fil-gramos').value) || 0
+        });
+    });
+    return lista;
+}
+
+function etiquetaGuardadaFilamento(id) {
+    const f = state.filamentosGuardados.find(x => x.id === id);
+    return f ? `${f.marca} ${f.tipo} - ${f.color}` : '';
+}
+
 function getPartesExtraData() {
     const items = [];
     els.partesExtraContainer.querySelectorAll('.parte-extra-card').forEach(card => {
+        const id = card.querySelector('.parte-filamento').value;
         items.push({
             horas: card.querySelector('.parte-hrs').value,
             minutos: card.querySelector('.parte-min').value,
             gramos: card.querySelector('.parte-gramos').value,
-            filamentoId: card.querySelector('.parte-filamento').value
+            idFilamento: id,
+            label: etiquetaGuardadaFilamento(id),
+            filamentosExtra: Array.from(card.querySelectorAll('.parte-fil-row')).map(fila => {
+                const idExtra = fila.querySelector('.parte-fil-select').value;
+                return {
+                    idFilamento: idExtra,
+                    label: etiquetaGuardadaFilamento(idExtra),
+                    gramos: fila.querySelector('.parte-fil-gramos').value
+                };
+            })
         });
     });
     return items;
+}
+
+// Los gramos de cada filamento de una parte guardada, con su id y nombre
+function filamentosDeParteGuardada(parte) {
+    const lista = [{
+        idFilamento: parte.idFilamento || parte.filamentoId,
+        label: parte.label || parte.color || '',
+        gramos: parte.gramos
+    }];
+    (parte.filamentosExtra || []).forEach(it => lista.push(it));
+    return lista;
 }
 
 function loadPartesExtraData(items) {
@@ -655,7 +735,7 @@ function calculate() {
     els.partesExtraContainer.querySelectorAll('.parte-extra-card').forEach(card => {
         const p_hrs = parseFloat(card.querySelector('.parte-hrs').value) || 0;
         const p_min = parseFloat(card.querySelector('.parte-min').value) || 0;
-        const p_g = parseFloat(card.querySelector('.parte-gramos').value) || 0;
+        const p_g = filamentosDeParte(card).reduce((s, f) => s + f.gramos, 0);
         hImpVal += p_hrs;
         mImpVal += p_min;
         gFil += p_g;
@@ -706,13 +786,13 @@ function calculate() {
     
     // Sumar costos de filamento de Partes Extra
     els.partesExtraContainer.querySelectorAll('.parte-extra-card').forEach(card => {
-        const p_g = parseFloat(card.querySelector('.parte-gramos').value) || 0;
-        const p_fId = card.querySelector('.parte-filamento').value;
-        if(p_g > 0) {
-            let fData = getFilamentoData(p_fId);
-            cMaterialCamaCOP += (p_g * fData.pCOP) / 1000;
-            _listaMaterialesUnidad.push({ ref: fData.ref, gramos: p_g });
-        }
+        filamentosDeParte(card).forEach(({ id, gramos }) => {
+            if (gramos > 0) {
+                let fData = getFilamentoData(id);
+                cMaterialCamaCOP += (gramos * fData.pCOP) / 1000;
+                _listaMaterialesUnidad.push({ ref: fData.ref, gramos: gramos });
+            }
+        });
     });
 
     // Recalcular gFil total por si acaso (sumatoria total)
@@ -1083,8 +1163,10 @@ function itemsDesdePieceData(pieceData) {
     }
     if (Array.isArray(pieceData.partesExtraItems)) {
         pieceData.partesExtraItems.forEach(parte => {
-            const g = parseFloat(parte.gramos) || 0;
-            if (g > 0) items.push({ ref: ref(parte.idFilamento, parte.label), gramos: g });
+            filamentosDeParteGuardada(parte).forEach(it => {
+                const g = parseFloat(it.gramos) || 0;
+                if (g > 0) items.push({ ref: ref(it.idFilamento, it.label), gramos: g });
+            });
         });
     }
     return items;
@@ -2122,11 +2204,13 @@ function buildMaterialesFromPieceData(pieceData, camas) {
     // Partes extra
     if (Array.isArray(pieceData.partesExtraItems)) {
         pieceData.partesExtraItems.forEach(parte => {
-            const g = parseFloat(parte.gramos) || 0;
-            if (g > 0) {
-                const label = resolveFilamentoLabel(parte.idFilamento, parte.label || parte.color || 'Extra');
-                grupos[label] = (grupos[label] || 0) + g * camas;
-            }
+            filamentosDeParteGuardada(parte).forEach(it => {
+                const g = parseFloat(it.gramos) || 0;
+                if (g > 0) {
+                    const label = resolveFilamentoLabel(it.idFilamento, it.label || 'Extra');
+                    grupos[label] = (grupos[label] || 0) + g * camas;
+                }
+            });
         });
     }
     return grupos;
