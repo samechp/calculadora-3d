@@ -311,6 +311,25 @@ function formatTime(totalHours) {
     return baseStr;
 }
 
+// ===== FORMATOS DE LA COTIZACIÓN =====
+// Gramos enteros: 315.9000000003 -> "316 g"
+function formatGramos(g) {
+    return Math.round(g || 0).toLocaleString('es-CO') + ' g';
+}
+
+// Días de calendario redondeados hacia arriba, más los días de colchón.
+// 2 h -> 1 día; 30 h -> 2 días; con 1 de colchón, 13 h -> 2 días.
+function formatDias(horas, diasExtra) {
+    const dias = Math.max(1, Math.ceil((horas || 0) / 24)) + (diasExtra || 0);
+    return dias === 1 ? '1 día' : dias + ' días';
+}
+
+// El tiempo tal y como va en el PDF según lo elegido en el cuadro de opciones
+function tiempoParaCotizacion(horas, op) {
+    return op.enDias ? formatDias(horas, op.diasExtra) : formatTime(horas);
+}
+// ===== FIN FORMATOS DE LA COTIZACIÓN =====
+
 function checkDolarVisibility() {
     let usesDolar = (els.monedaFilamento.value === 'USD') || 
                       (els.monedaRepuestos.value === 'USD') ||
@@ -889,7 +908,8 @@ function calculate() {
         '_tiempo_prod_cama_h_real': tiempoProdCama_h,
         '_hInv': hInv,
         '_mErrPct': mErr,
-        'Tiempo Est. Producción': formatTime(tiempoTotalPieza_h)
+        '_tiempo_total_h': tiempoTotalPiezaConBuffer_h,
+        'Tiempo Est. Producción': formatTime(tiempoTotalPiezaConBuffer_h)
     };
 
     const render = (valCOP) => {
@@ -1757,6 +1777,7 @@ async function saveAllData(forzar) {
             empresas: state.empresas || {},
             empresaActiva: state.empresaActiva || null,
             incluirEmpresa: !!state.incluirEmpresa,
+            opcionesCotizacion: state.opcionesCotizacion || null,
             contarBobinas: contarBobinas(),
             tema: state.tema || null
         });
@@ -1796,6 +1817,7 @@ async function loadProfiles() {
             state.empresas = parsed.empresas || {};
             state.empresaActiva = parsed.empresaActiva || null;
             state.incluirEmpresa = !!parsed.incluirEmpresa;
+            state.opcionesCotizacion = parsed.opcionesCotizacion || null;
             state.contarBobinas = parsed.contarBobinas !== false;
             sincronizarCheckBobinas();
             state.tema = parsed.tema || null;
@@ -1823,10 +1845,19 @@ function empresaJSON() {
 }
 
 els.btnExportPdf.addEventListener('click', async () => {
+    const horas = lastCalcResults['_tiempo_total_h'];
+    const op = await opcionesCotizacion({
+        gramos: lastCalcResults['_gramos_input'],
+        horas: horas != null ? horas : null,
+        nombre: state.currentPiece || '',
+        etiquetaNombre: 'Nombre de la pieza'
+    });
+    if (!op) return;
     const total = formatMoney(lastCalcResults['Total a Cobrar'], false);
-    const gFil = lastCalcResults['_gramos_input'];
-    const tiempo_prod = lastCalcResults['Tiempo Est. Producción'] || '';
-    const nombre = state.currentPiece || '';
+    // Python le pone la " g" detrás, así que va solo el número
+    const gFil = op.gramos ? formatGramos(lastCalcResults['_gramos_input']).replace(/ g$/, '') : '';
+    const tiempo_prod = (op.tiempo && horas != null) ? tiempoParaCotizacion(horas, op) : '';
+    const nombre = op.nombre ? (state.currentPiece || '') : '';
     if(window.pywebview) {
         await window.pywebview.api.export_pdf(total, gFil, tiempo_prod, nombre, empresaJSON());
     } else if (window.exportPdfPieza) {
@@ -1843,6 +1874,7 @@ els.btnExportExcel.addEventListener('click', async () => {
     delete d['_mErrCOP'];
     delete d['_tiempo_prod_cama_h'];
     delete d['_hInv'];
+    delete d['_tiempo_total_h'];
     delete d['_listaMaterialesUnidad']; // Remove array to prevent Excel export crash
     for(let k in d) d[k] = isNaN(d[k]) && typeof d[k] === 'string' && (d[k].includes('min') || d[k].includes('h')) ? d[k] : formatMoney(d[k], false);
     const nombre = state.currentPiece || '';
@@ -1856,21 +1888,29 @@ els.btnExportExcel.addEventListener('click', async () => {
 els.btnExportProjectPdf.addEventListener('click', async () => {
     if(state._lastProjectCalc) {
         const p = state._lastProjectCalc;
+        const op = await opcionesCotizacion({
+            gramos: p.gramosTotales,
+            horas: p.tiempoEstProyecto,
+            nombre: state.currentProject || '',
+            etiquetaNombre: 'Nombre del proyecto'
+        });
+        if (!op) return;
+        const gramosPdf = op.gramos ? formatGramos(p.gramosTotales).replace(/ g$/, '') : '';
         const total = formatMoney(p.totalCobrarTotal, false);
         const precio_cama = formatMoney(applyRedondeo(lastCalcResults['_total_cobrar_raw'], els.redondeoMode.value), false);
         const matPdf = formatMoney(p.costoMaterialesProyecto, false);
         const insPdf = p.insumosExtraProyecto > 0 ? formatMoney(p.insumosExtraProyecto, false) : "0";
         const moPdf = formatMoney(p.manoObraProyecto, false);
-        const tiempo_proy = formatTime(p.tiempoEstProyecto);
+        const tiempo_proy = op.tiempo ? tiempoParaCotizacion(p.tiempoEstProyecto, op) : '';
         const costo_unidad_pdf = formatMoney(p.costoPorUnidad, false);
         const costo_prod_pieza_pdf = p.costoProduccionPiezaProyecto ? formatMoney(p.costoProduccionPiezaProyecto, false) : null;
         const costo_prod_total_pdf = p.costoProduccionTotalProyecto ? formatMoney(p.costoProduccionTotalProyecto, false) : null;
-        const nombre = state.currentProject || '';
+        const nombre = op.nombre ? (state.currentProject || '') : '';
         
         if (window.exportPdfProyecto) {
-            window.exportPdfProyecto(total, p.gramosTotales, p.camas, p.unidades, p.unidadesCama, precio_cama, matPdf, insPdf, moPdf, tiempo_proy, costo_unidad_pdf, nombre, costo_prod_pieza_pdf, costo_prod_total_pdf);
+            window.exportPdfProyecto(total, gramosPdf, p.camas, p.unidades, p.unidadesCama, precio_cama, matPdf, insPdf, moPdf, tiempo_proy, costo_unidad_pdf, nombre, costo_prod_pieza_pdf, costo_prod_total_pdf);
         } else if (window.pywebview) {
-            await window.pywebview.api.export_project_pdf(total, p.gramosTotales, p.camas, p.unidades, p.unidadesCama, precio_cama, matPdf, insPdf, moPdf, tiempo_proy, costo_unidad_pdf, nombre, costo_prod_pieza_pdf, costo_prod_total_pdf, empresaJSON());
+            await window.pywebview.api.export_project_pdf(total, gramosPdf, p.camas, p.unidades, p.unidadesCama, precio_cama, matPdf, insPdf, moPdf, tiempo_proy, costo_unidad_pdf, nombre, costo_prod_pieza_pdf, costo_prod_total_pdf, empresaJSON());
         }
     }
 });
@@ -1909,8 +1949,15 @@ els.btnExportProjectExcel.addEventListener('click', async () => {
 
 els.btnExportMegaPdf.addEventListener('click', async () => {
     if(state._lastMegaProjectCalc && state.megaProjectItems.length > 0) {
+        const op = await opcionesCotizacion({
+            horas: state._lastMegaProjectCalc.totalTiempo_h,
+            nombre: state.currentMegaProject || '',
+            etiquetaNombre: 'Nombre del mega proyecto'
+        });
+        if (!op) return;
+        const tiempo = (h) => op.tiempo ? tiempoParaCotizacion(h || 0, op) : '';
         const payloadObj = {
-            nombre: state.currentMegaProject || "Mega Proyecto",
+            nombre: (op.nombre && state.currentMegaProject) || "Mega Proyecto",
             items: state.megaProjectItems.map(p => ({
                 nombre: p._nombre,
                 unidades: p.unidadesPedido,
@@ -1918,13 +1965,13 @@ els.btnExportMegaPdf.addEventListener('click', async () => {
                 costo_unidad: formatMoney(p.resultados.costoPorUnidad, false),
                 costo_prod_pieza: p.resultados.costoProduccionPiezaProyecto ? formatMoney(p.resultados.costoProduccionPiezaProyecto, false) : null,
                 insumos: formatMoney(p.resultados.insumosExtraProyecto, false),
-                tiempo: formatTime(p.resultados.tiempoEstProyecto || 0),
+                tiempo: tiempo(p.resultados.tiempoEstProyecto),
                 total: formatMoney(p.resultados.totalCobrarTotal, false)
             })),
             totales: {
                 camas: state._lastMegaProjectCalc.totalCamas,
-                horas: Math.ceil(state._lastMegaProjectCalc.totalHoras),
-                tiempo: formatTime(state._lastMegaProjectCalc.totalTiempo_h),
+                horas: (op.tiempo && !op.enDias) ? Math.ceil(state._lastMegaProjectCalc.totalHoras) : '',
+                tiempo: tiempo(state._lastMegaProjectCalc.totalTiempo_h),
                 insumos: formatMoney(state._lastMegaProjectCalc.totalInsumos, false),
                 costo_prod_pieza: state._lastMegaProjectCalc.costoProdPiezaMegaPromedio ? formatMoney(state._lastMegaProjectCalc.costoProdPiezaMegaPromedio, false) : null,
                 costo_prod_total: state._lastMegaProjectCalc.totalCostoProdMega ? formatMoney(state._lastMegaProjectCalc.totalCostoProdMega, false) : null,

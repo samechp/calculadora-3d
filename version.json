@@ -1,6 +1,6 @@
 {
-  "app_version": "1.0.6",
-  "web_version": "1.2.4",
+  "app_version": "1.0.7",
+  "web_version": "1.2.5",
   "web_files": [
     "index.html",
     "style.css",
@@ -20,5 +20,5 @@
     "exports.js",
     "filamentos_logic.js"
   ],
-  "notas": "Varios filamentos en cada parte extra, y el filamento de las partes ya sale con su nombre en proyectos y lista de materiales"
+  "notas": "Al sacar el PDF se elige que incluir; los gramos salen redondeados y el tiempo en dias con colchon"
 }

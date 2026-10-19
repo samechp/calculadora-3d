@@ -160,8 +160,8 @@ def save_window_state(st):
 #     plano y queda lista para el siguiente arranque.
 #   - El EJECUTABLE (esta parte en Python): son ~34 MB. Solo se avisa; el usuario
 #     decide con un botón y la app se reinicia sola.
-APP_VERSION = '1.0.6'   # versión del .exe
-WEB_VERSION = '1.2.4'   # versión de la interfaz que viene dentro del .exe
+APP_VERSION = '1.0.7'   # versión del .exe
+WEB_VERSION = '1.2.5'   # versión de la interfaz que viene dentro del .exe
 
 REPO = 'samechp/calculadora-3d'
 VERSION_URL = 'https://raw.githubusercontent.com/{}/main/version.json'.format(REPO)
@@ -747,16 +747,18 @@ class Api:
             if nombre:
                 pdf.cell(200, 10, txt=_texto_pdf(f"Pieza: {nombre}"), ln=1, align='L')
             pdf.ln(5)
-            pdf.set_font("Arial", 'B', 12)
-            pdf.cell(100, 10, txt="Gramos de Filamento Estimados: ", ln=0)
-            pdf.set_font("Arial", size=12)
-            pdf.cell(100, 10, txt=f"{filament} g", ln=1)
+            # Gramos y tiempo pueden venir vacíos: el usuario eligió no ponerlos
+            if filament not in (None, ''):
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(100, 10, txt="Gramos de Filamento Estimados: ", ln=0)
+                pdf.set_font("Arial", size=12)
+                pdf.cell(100, 10, txt=f"{filament} g", ln=1)
             
             if tiempo_prod:
                 pdf.set_font("Arial", 'B', 12)
-                pdf.cell(100, 10, txt="Tiempo Est. de Producción (Aprox): ", ln=0)
+                pdf.cell(100, 10, txt=_texto_pdf("Tiempo Est. de Producción (Aprox): "), ln=0)
                 pdf.set_font("Arial", size=12)
-                pdf.cell(100, 10, txt=f"{tiempo_prod}", ln=1)
+                pdf.cell(100, 10, txt=_texto_pdf(f"{tiempo_prod}"), ln=1)
 
             pdf.ln(5)
             pdf.set_font("Arial", 'B', 14)
@@ -837,6 +839,8 @@ class Api:
             pdf.set_font("Arial", size=12)
             date_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
             pdf.cell(200, 10, txt=f"Fecha: {date_str}", ln=1, align='L')
+            if nombre:
+                pdf.cell(200, 10, txt=_texto_pdf(f"Proyecto: {nombre}"), ln=1, align='L')
             pdf.ln(5)
             
             pdf.set_font("Arial", 'B', 12)
@@ -845,9 +849,10 @@ class Api:
             pdf.cell(100, 10, txt=f"Unidades Totales: {unids_pedido}", ln=1)
             pdf.cell(100, 10, txt=f"Unidades por Cama: {unids_cama}", ln=1)
             pdf.cell(100, 10, txt=f"Total de Camas (Impresiones): {camas}", ln=1)
-            pdf.cell(100, 10, txt=f"Gramos de Filamento Totales Estimados: {gramos_totales} g", ln=1)
+            if gramos_totales not in (None, ''):
+                pdf.cell(100, 10, txt=f"Gramos de Filamento Totales Estimados: {gramos_totales} g", ln=1)
             if tiempo_proy:
-                pdf.cell(100, 10, txt=f"Tiempo Est. de Producción (Aprox): {tiempo_proy}", ln=1)
+                pdf.cell(100, 10, txt=_texto_pdf(f"Tiempo Est. de Producción (Aprox): {tiempo_proy}"), ln=1)
             
             pdf.ln(5)
             
@@ -936,7 +941,8 @@ class Api:
                 pdf.set_font("Arial", 'B', 12)
                 pdf.cell(0, 8, txt=f"- {item.get('nombre', '')} ({item.get('unidades', '')} u)", ln=1)
                 pdf.set_font("Arial", size=10)
-                pdf.cell(0, 6, txt=f"  Camas: {item.get('camas', '')} | Insumos: {item.get('insumos', '')} | Tiempo Prod: {item.get('tiempo', '')}", ln=1)
+                tiempo_str = f" | Tiempo Prod: {item.get('tiempo')}" if item.get('tiempo') else ""
+                pdf.cell(0, 6, txt=_texto_pdf(f"  Camas: {item.get('camas', '')} | Insumos: {item.get('insumos', '')}{tiempo_str}"), ln=1)
                 costo_prod_str = f" | Costo Prod. c/u: {item.get('costo_prod_pieza', '')}" if item.get('costo_prod_pieza') else ""
                 pdf.cell(0, 6, txt=f"  Precio por unidad: {item.get('costo_unidad', '')} | Precio a cobrar: {item.get('total', '')}{costo_prod_str}", ln=1)
                 pdf.ln(3)
@@ -950,9 +956,10 @@ class Api:
             totales = data.get('totales', {})
             pdf.set_font("Arial", size=12)
             pdf.cell(100, 8, txt=f"Total de Camas: {totales.get('camas', '')}", ln=1)
-            pdf.cell(100, 8, txt=f"Horas: {totales.get('horas', '')} h", ln=1)
+            if totales.get('horas') not in (None, ''):
+                pdf.cell(100, 8, txt=f"Horas: {totales.get('horas')} h", ln=1)
             if totales.get('tiempo'):
-                pdf.cell(100, 8, txt=f"Tiempo Estimado Produccion: {totales.get('tiempo', '')}", ln=1)
+                pdf.cell(100, 8, txt=_texto_pdf(f"Tiempo Estimado Produccion: {totales.get('tiempo', '')}"), ln=1)
             
             pdf.ln(3)
             if totales.get('insumos') and totales.get('insumos') not in ["0", "$ 0", "COP 0", "USD 0"]:

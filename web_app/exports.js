@@ -11,9 +11,11 @@ function exportPdfPieza(total, gFil, tiempo_prod, nombre) {
     doc.setFontSize(14);
     doc.text(`Pieza/Proyecto: ${nombre || 'Sin nombre'}`, 20, 40);
     
+    // Gramos y tiempo pueden venir vacíos: el usuario eligió no ponerlos
     doc.setFontSize(12);
-    doc.text(`Gramos de filamento totales: ${gFil}g`, 20, 50);
-    doc.text(`Tiempo estimado de produccion: ${tiempo_prod || 'N/A'}`, 20, 60);
+    let y = 50;
+    if (gFil !== '' && gFil != null) { doc.text(`Gramos de filamento totales: ${gFil} g`, 20, y); y += 10; }
+    if (tiempo_prod) doc.text(`Tiempo estimado de produccion: ${tiempo_prod}`, 20, y);
     
     doc.setFontSize(16);
     doc.text(`Costo Bruto (Total a Cobrar): ${total}`, 20, 80);
@@ -54,8 +56,9 @@ function exportProjectPdf(total, gramos, camas, unidades, unidadesCama, precio_c
     doc.text(`Unidades Totales: ${unidades}`, 20, 55);
     doc.text(`Unidades por Cama: ${unidadesCama}`, 20, 65);
     doc.text(`Total de Camas: ${camas}`, 20, 75);
-    doc.text(`Gramos Totales: ${gramos}g`, 20, 85);
-    doc.text(`Tiempo Estimado: ${tiempo}`, 20, 95);
+    let y = 85;
+    if (gramos !== '' && gramos != null) { doc.text(`Gramos Totales: ${gramos} g`, 20, y); y += 10; }
+    if (tiempo) doc.text(`Tiempo Estimado: ${tiempo}`, 20, y);
     
     const bodyRows = [
         ['Costo Materiales', mat],
@@ -121,12 +124,10 @@ function exportMegaProjectPdf(payloadStr) {
     doc.setFontSize(14);
     doc.text("Resumen Global", 20, finalY);
     
-    const resumenBody = [
-        ['Total Camas', data.totales.camas.toString()],
-        ['Horas de Impresi\u00f3n', data.totales.horas.toString()],
-        ['Tiempo Est. Total', data.totales.tiempo],
-        ['Insumos Globales', data.totales.insumos],
-    ];
+    const resumenBody = [['Total Camas', data.totales.camas.toString()]];
+    if (data.totales.horas !== '') resumenBody.push(['Horas de Impresi\u00f3n', data.totales.horas.toString()]);
+    if (data.totales.tiempo) resumenBody.push(['Tiempo Est. Total', data.totales.tiempo]);
+    resumenBody.push(['Insumos Globales', data.totales.insumos]);
     if (data.totales.costo_prod_pieza) resumenBody.push(['Costo Producci\u00f3n promedio (c/u)', data.totales.costo_prod_pieza]);
     if (data.totales.costo_prod_total) resumenBody.push(['Costo Producci\u00f3n total Mega Proyecto', data.totales.costo_prod_total]);
     resumenBody.push(['TOTAL A COBRAR', data.totales.total]);
@@ -174,99 +175,4 @@ window.exportProjectExcel = exportProjectExcel;
 window.exportMegaProjectPdf = exportMegaProjectPdf;
 window.exportMegaProjectExcel = exportMegaProjectExcel;
 
-
-// ====== EXPORTAR LISTA DE MATERIALES (BOM) ======
-function generarBOM() {
-    // Collect data from lastCalcResults and _lastProjectCalc
-    const isProject = els.projectResults && els.projectResults.style.display !== 'none';
-    const isMega = els.megaProjectResults && els.megaProjectResults.style.display !== 'none';
-    
-    let multiplier = 1;
-    let title = "Lista de Materiales - Pieza";
-    let name = (els.currentPiece || "SinNombre");
-    
-    if (isMega) {
-        multiplier = 1; // Assuming mega project already sums up... wait, mega project calculation loops through projects.
-        // Actually, we don't have BOM array in Mega Project calculation stored. 
-        // We'll just export for Project or Piece.
-        avisar("BOM Export for Mega Projects requires deeper integration. Exporting from current Project/Piece instead.");
-        return;
-    }
-    
-    if (isProject) {
-        multiplier = state._lastProjectCalc ? state._lastProjectCalc.camas : 1;
-        title = "Lista de Materiales - Proyecto";
-        name = (els.currentProject || "Proyecto") + "_" + name;
-    }
-    
-    if(!lastCalcResults['_listaMaterialesUnidad']) {
-        avisar("No hay materiales registrados.");
-        return;
-    }
-    
-    let report = `${title}\nNombre: ${name}\n\n`;
-    report += `--- FILAMENTOS REQUERIDOS ---\n`;
-    
-    let totalGramosGeneral = 0;
-    
-    // Agrupar filamentos por ID
-    let filamentosMap = {};
-    lastCalcResults['_listaMaterialesUnidad'].forEach(item => {
-        let key = item.ref.id || (item.ref.marca + item.ref.color);
-        if(!filamentosMap[key]) filamentosMap[key] = { ref: item.ref, gramos: 0 };
-        filamentosMap[key].gramos += (item.gramos * multiplier);
-        totalGramosGeneral += (item.gramos * multiplier);
-    });
-    
-    Object.values(filamentosMap).forEach(f => {
-        let kgs = (f.gramos / 1000).toFixed(2);
-        let rollos = Math.ceil(kgs);
-        report += `• ${f.ref.marca} ${f.ref.tipo} - ${f.ref.color}${window.Color.textoColor(f.ref)}: ${f.gramos} g (aprox ${kgs} Kg -> ${rollos} rollos de 1Kg)\n`;
-    });
-    report += `\nTotal General Filamento: ${totalGramosGeneral} g\n\n`;
-    
-    report += `--- INSUMOS EXTRA REQUERIDOS ---\n`;
-    const insumosExtra = getInsumosExtraData();
-    if(insumosExtra.length === 0) {
-        report += `Ninguno\n`;
-    } else {
-        insumosExtra.forEach(ins => {
-            let cantUsadaTotal = parseFloat(ins.cantUsada || 0) * multiplier;
-            let cantPaquete = parseFloat(ins.cantPaquete || 1);
-            let paquetesRequeridos = Math.ceil(cantUsadaTotal / cantPaquete);
-            report += `• ${ins.nombre}: ${cantUsadaTotal} unidades -> Comprar ${paquetesRequeridos} paquete(s) de ${cantPaquete}\n`;
-        });
-    }
-
-    // Costo de Producción
-    report += `\n--- COSTO DE PRODUCCIÓN ---\n`;
-    if (isProject && state._lastProjectCalc) {
-        const p = state._lastProjectCalc;
-        if (p.costoProduccionPiezaProyecto) {
-            report += `Costo Producción (1 pieza): ${formatMoney(p.costoProduccionPiezaProyecto, false)}\n`;
-        }
-        if (p.costoProduccionTotalProyecto) {
-            report += `Costo Producción (proyecto completo): ${formatMoney(p.costoProduccionTotalProyecto, false)}\n`;
-        }
-    } else if (lastCalcResults['Costo Total de Producción']) {
-        report += `Costo Producción (por pieza/cama): ${formatMoney(lastCalcResults['Costo Total de Producción'], false)}\n`;
-    }
-
-    if (window.pywebview) {
-        window.pywebview.api.export_bom(report, name);
-    } else {
-        const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `BOM_${name}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-}
-
-if(els.btnExportBom) {
-    els.btnExportBom.addEventListener('click', generarBOM);
-}
+// La lista de materiales (BOM) la exporta app.js, junto al botón.
