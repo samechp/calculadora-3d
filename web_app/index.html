@@ -679,9 +679,10 @@
                     </div>
                     <hr>
                     <div class="result-item highlight">
-                        <span>Costo Total Bruto (Materiales):</span>
+                        <span>Costo de impresión:</span>
                         <span id="resCostoTotal" class="val">0</span>
                     </div>
+                    <div class="result-suma">Material + luz + desgaste + margen de error</div>
                     <hr>
                     <div class="result-item">
                         <span>Insumos extra:</span>
@@ -700,6 +701,7 @@
                         <span id="labelCostoProduccion">Costo Total de Producción:</span>
                         <span id="resCostoProduccion" class="val">0</span>
                     </div>
+                    <div class="result-suma">Costo de impresión + insumos extra + mano de obra</div>
                     <div class="result-item" id="containerCostoProduccionCama" style="display: none;">
                         <span>Costo Producción (cama completa):</span>
                         <span id="resCostoProduccionCama" class="val">0</span>
@@ -708,6 +710,7 @@
                         <span id="labelGanancia">Ganancia neta:</span>
                         <span id="resGanancia" class="val">0</span>
                     </div>
+                    <div class="result-suma">Total a cobrar − costo de producción (ya pagada tu mano de obra)</div>
                     <div class="result-item" id="containerGananciaCama" style="display: none;">
                         <span>Ganancia neta (cama completa):</span>
                         <span id="resGananciaCama" class="val">0</span>
@@ -840,6 +843,7 @@
                             <span>Gramos totales:</span>
                             <span class="val" id="resGramosTotales">—</span>
                         </div>
+                        <div class="result-suma" id="sumaGramosProyecto" style="display:none;"></div>
                         <div class="result-item" id="containerBobinas">
                             <span><i class="bi bi-disc"></i> Bobinas necesarias (1 kg):</span>
                             <span class="val" id="resBobinas">—</span>
@@ -870,9 +874,10 @@
                         </div>
                         <hr>
                         <div class="result-item highlight">
-                            <span>Costo Total Materiales:</span>
+                            <span>Costo de impresión:</span>
                             <span class="val" id="resMaterialesProyecto">—</span>
                         </div>
+                        <div class="result-suma">Material + luz + desgaste + margen de error</div>
                         <hr>
                         <div class="result-item" id="containerInsumosProyecto" style="display: none;">
                             <span>Insumos extra:</span>
@@ -891,11 +896,13 @@
                             <span>Costo Producción (proyecto completo):</span>
                             <span class="val" id="resCostoProdTotalProyecto">—</span>
                         </div>
+                        <div class="result-suma">Costo de impresión + insumos extra + mano de obra</div>
                         <hr>
                         <div class="result-item ganancia-item">
                             <span>Ganancia del proyecto:</span>
                             <span class="val" id="resGananciaProyecto">—</span>
                         </div>
+                        <div class="result-suma">Total a cobrar − costo de producción (ya pagada tu mano de obra)</div>
                         <div class="result-item highlight-secondary">
                             <span>Costo por unidad:</span>
                             <span class="val" id="resCostoPorUnidad">—</span>
@@ -974,6 +981,7 @@
                         <div class="result-item"><span>Horas impresión:</span><span class="val" id="resMegaHoras">—</span></div>
                         <div class="result-item"><span>Tiempo Est. Producción:</span><span class="val" id="resMegaTiempo">—</span></div>
                         <div class="result-item"><span>Gramos totales:</span><span class="val" id="resMegaGramos">—</span></div>
+                        <div class="result-suma" id="sumaGramosMega" style="display:none;"></div>
                         <div class="desglose-colores" id="desgloseMega" style="display:none;">
                             <div class="desglose-cab">
                                 <span class="desglose-titulo">Filamento por color</span>
@@ -987,15 +995,18 @@
                         <div class="result-item"><span>Desgaste de máquina:</span><span class="val" id="resMegaDesgaste">—</span></div>
                         <div class="result-item"><span>Margen de error:</span><span class="val" id="resMegaMargenError">—</span></div>
                         <hr>
-                        <div class="result-item highlight"><span>Costo Total Materiales:</span><span class="val" id="resMegaMateriales">—</span></div>
+                        <div class="result-item highlight"><span>Costo de impresión:</span><span class="val" id="resMegaMateriales">—</span></div>
+                        <div class="result-suma">Material + luz + desgaste + margen de error</div>
                         <hr>
                         <div class="result-item" id="containerMegaInsumos" style="display: none;"><span>Insumos extra totales:</span><span class="val" id="resMegaInsumos">—</span></div>
                         <div class="result-item"><span>Mano de obra total:</span><span class="val" id="resMegaManoObra">—</span></div>
                         <hr>
                         <div class="result-item highlight-secondary"><span>Costo Producción promedio (c/u):</span><span class="val" id="resMegaCostoProdPieza">—</span></div>
                         <div class="result-item highlight-secondary"><span>Costo Producción total Mega Proyecto:</span><span class="val" id="resMegaCostoProdTotal">—</span></div>
+                        <div class="result-suma">Costo de impresión + insumos extra + mano de obra</div>
                         <hr>
-                        <div class="result-item ganancia-item"><span>Ganancia combinada:</span><span class="val" id="resMegaGanancia">—</span></div>
+                        <div class="result-item ganancia-item"><span>Ganancia neta:</span><span class="val" id="resMegaGanancia">—</span></div>
+                        <div class="result-suma">Total a cobrar − costo de producción (ya pagada tu mano de obra)</div>
                         <div class="result-item final-price"><span>Total a cobrar Mega Proyecto:</span><span class="val" id="resMegaTotal">—</span></div>
                     </div>
                     <div class="export-actions">

@@ -749,6 +749,16 @@ hr {
 .final-price.en-perdida { border-color: var(--danger); }
 .final-price.en-perdida .val { color: var(--danger); }
 
+/* Debajo de un total, qué lo suma: el número se cree si se ve de dónde sale */
+.result-suma {
+    margin: -4px 0 4px;
+    font-size: var(--t-micro);
+    font-stretch: 92%;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+    color: var(--text-tenue);
+}
+
 /* La anotacion que dice de donde sale un numero inflado */
 .anotacion {
     font-size: var(--t-micro);

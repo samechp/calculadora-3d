@@ -160,7 +160,7 @@ const AYUDA_RESULTADOS = {
     resManoObra: 'Tu trabajo cobrado: valor de tu hora × (tiempo de modelado + tiempo de operario). El tiempo que la impresora trabaja sola no cuenta aquí.',
     resTiempoProduccion: 'Cuánto te toma sacar una cama completa: impresión + calentamiento + tu tiempo de operario (con el colchón de error incluido).',
     resCostoProduccion: 'TODO lo que te cuesta la pieza: costo de impresión + insumos + mano de obra. Vender por debajo de esto es perder plata.',
-    resGanancia: 'Lo que te queda limpio: precio de venta menos el costo de impresión y los insumos.',
+    resGanancia: 'Lo que te queda limpio: precio de venta menos el costo de producción (impresión, insumos y tu mano de obra). Tu mano de obra ya está pagada aparte: no se cuenta como ganancia.',
     resTotalCobrar: 'El precio final sugerido: (costo de impresión × margen de ganancia) + mano de obra + insumos, ya redondeado.',
 
     // Proyecto
@@ -176,14 +176,14 @@ const AYUDA_RESULTADOS = {
     resMaterialesProyecto: 'Costo de imprimir todo el pedido (material + luz + desgaste + error), sin tu tiempo ni insumos.',
     resCostoProdPiezaProyecto: 'Lo que cuesta producir una sola unidad dentro de este pedido, ya con todo incluido.',
     resCostoProdTotalProyecto: 'Lo que cuesta producir el pedido completo. Es tu punto de equilibrio: por debajo de esto, pierdes.',
-    resGananciaProyecto: 'La utilidad limpia de todo el pedido.',
+    resGananciaProyecto: 'La utilidad limpia de todo el pedido: lo que cobras menos el costo de producción, ya descontada tu mano de obra.',
     resCostoPorUnidad: 'Precio por unidad al que te queda el pedido, ya con margen aplicado.',
     resTotalProyecto: 'Lo que le cobras al cliente por el pedido completo.',
 
     // Mega proyecto
     resMegaCostoProdPieza: 'Promedio de lo que cuesta producir una unidad, considerando todos los proyectos del grupo.',
     resMegaCostoProdTotal: 'Costo de producir todos los proyectos agrupados. Tu punto de equilibrio global.',
-    resMegaGanancia: 'Utilidad limpia sumando todos los proyectos del grupo.',
+    resMegaGanancia: 'Utilidad limpia de todos los proyectos del grupo: lo que cobras menos el costo de producción total, ya descontada tu mano de obra.',
     resMegaTotal: 'Lo que le cobras al cliente por todos los proyectos juntos.'
 };
 

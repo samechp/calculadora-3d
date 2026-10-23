@@ -862,8 +862,9 @@ function calculate() {
         const _pvpAbs = state.resultadosEnUSD ? (_precioVentaPiezaRaw * state.precioDolar) : _precioVentaPiezaRaw;
         totalCobrarCOP = _pvpAbs;
     }
-    // Ganancia neta por unidad
-    const gananciaCOP = totalCobrarCOP - costoTotalCOP - insExCOPUnit;
+    // Ganancia neta por unidad: lo que queda después de pagarlo TODO, también
+    // tu mano de obra. Tu sueldo es un costo, no ganancia.
+    const gananciaCOP = totalCobrarCOP - costoProduccionCOP;
 
     // Guardar para exportar y para escalar proyecto
     lastCalcResults = {
@@ -933,7 +934,7 @@ function calculate() {
 
     // Mostrar desglose por cama cuando hay más de 1 unidad por cama
     if (unidadesCama > 1) {
-        // Ganancia por cama = totalCobrar por cama - costoBase cama - insumos cama
+        // Ganancia por cama = totalCobrar por cama - costo de producción por cama
         const totalCobrarCamaCOP = totalCobrarCOP * unidadesCama;
         const gananciaCamaCOP = gananciaCOP * unidadesCama;
 
@@ -1021,7 +1022,7 @@ function calculateProject() {
     }
     
     const costoPorUnidad = totalCobrarTotal / unidades;
-    const gananciaProyecto = totalCobrarTotal - costoMaterialesProyecto - insumosExtraProyecto;
+    const gananciaProyecto = totalCobrarTotal - costoMaterialesProyecto - insumosExtraProyecto - manoObraProyecto;
 
     // Producción por cama
     const unidadesProducidas = sinSobrantes ? unidades : (camas * unidadesCama);
@@ -1051,6 +1052,7 @@ function calculateProject() {
     els.resHorasTotales.innerHTML = _nota(horasTotales.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' h');
     els.resTiempoProduccionProyecto.innerHTML = _nota(formatTime(tiempoEstProyecto));
     els.resGramosTotales.innerHTML = _nota(gramosTotales.toLocaleString('es-CO', { maximumFractionDigits: 0 }) + ' g');
+    pintarSumaGramos('sumaGramosProyecto', gramosTotales, _pct);
     // Filamento por color de TODO el pedido: es lo que se lleva a la tienda
     const desgloseProyecto = agruparFilamentos(lastCalcResults['_listaMaterialesUnidad'], camasEquivalentes, factorError());
     pintarDesglose('desgloseProyecto', 'listaDesgloseProyecto', desgloseProyecto, contarBobinas());
@@ -1212,6 +1214,20 @@ function fusionarDesgloses(listas) {
 
 function factorError() {
     return 1 + ((lastCalcResults['_mErrPct'] || 0) / 100);
+}
+
+// Los gramos totales ya traen la reserva del margen de error, pero "Precio
+// material" no: la reserva se cobra en "Margen de error". Sin decirlo, gramos
+// × precio del kilo no da "Precio material" y parece que la cuenta está mal.
+function pintarSumaGramos(id, gramosConReserva, pct) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!(pct > 0) || !(gramosConReserva > 0)) { el.style.display = 'none'; return; }
+    const reales = gramosConReserva / (1 + pct / 100);
+    const g = (n) => n.toLocaleString('es-CO', { maximumFractionDigits: 0 }) + ' g';
+    el.textContent = g(reales) + ' de la impresión + ' + g(gramosConReserva - reales) +
+        ' de reserva (' + pct + '%). La reserva se cobra en "Margen de error".';
+    el.style.display = 'block';
 }
 
 function pintarDesglose(idBloque, idLista, desglose, conBobinas) {
@@ -1611,7 +1627,7 @@ function calculateMegaProject() {
     
     let totalCamas = 0, totalHoras = 0, totalTiempo_h = 0, totalGramos = 0;
     let totalMat = 0, totalLuz = 0, totalDesp = 0, totalErr = 0;
-    let totalMateriales = 0, totalInsumos = 0, totalManoObra = 0, totalGanancia = 0, totalCobrar = 0;
+    let totalMateriales = 0, totalInsumos = 0, totalManoObra = 0, totalCobrar = 0;
     
     state.megaProjectItems.forEach(item => {
         const p = item.resultados;
@@ -1627,9 +1643,12 @@ function calculateMegaProject() {
         totalMateriales += p.costoMaterialesProyecto || 0;
         totalInsumos += p.insumosExtraProyecto || 0;
         totalManoObra += p.manoObraProyecto || 0;
-        totalGanancia += p.gananciaProyecto || 0;
         totalCobrar += p.totalCobrarTotal || 0;
     });
+    // El % de margen de error de cada sub-proyecto no se guarda, pero se deduce:
+    // el margen de error es ese % sobre material + luz + desgaste.
+    const baseErr = totalMat + totalLuz + totalDesp;
+    const pctErrMega = baseErr > 0 ? Math.round((totalErr / baseErr) * 100) : 0;
     
     // Calcular costo de producción promedio ponderado por pieza
     // Fórmula: para cada sub-proyecto, costoProd = (materiales + insumos + manoObra). Promedio = totalCostoProd / totalUnidades
@@ -1644,11 +1663,16 @@ function calculateMegaProject() {
         totalCostoProdMega += costoProdItem;
     });
     const costoProdPiezaMegaPromedio = totalUnidades > 0 ? totalCostoProdMega / totalUnidades : 0;
+    // Se recalcula en vez de sumar la ganancia guardada: los sub-proyectos
+    // guardados antes contaban tu mano de obra como ganancia.
+    const totalGanancia = totalCobrar - totalCostoProdMega;
 
+    const _notaMega = (txt) => txt + (pctErrMega > 0 ? ' <span class="anotacion">+' + pctErrMega + '%</span>' : '');
     els.resMegaCamas.innerText = totalCamas.toLocaleString('es-CO');
-    els.resMegaHoras.innerText = totalHoras.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' h';
-    els.resMegaTiempo.innerText = formatTime(totalTiempo_h);
-    els.resMegaGramos.innerText = totalGramos.toLocaleString('es-CO', { maximumFractionDigits: 0 }) + ' g';
+    els.resMegaHoras.innerHTML = _notaMega(totalHoras.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' h');
+    els.resMegaTiempo.innerHTML = _notaMega(formatTime(totalTiempo_h));
+    els.resMegaGramos.innerHTML = _notaMega(totalGramos.toLocaleString('es-CO', { maximumFractionDigits: 0 }) + ' g');
+    pintarSumaGramos('sumaGramosMega', totalGramos, pctErrMega);
     
     const renderProj = (valCOP) => state.resultadosEnUSD ? formatMoney(valCOP / state.precioDolar, true) : formatMoney(valCOP, false);
     
